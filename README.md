@@ -72,7 +72,7 @@ addons/main (SQF)                   companion/director
 | `extension` | Rust `cdylib` built on [arma-rs](https://github.com/BrettMayson/arma-rs); becomes `ai_director_x64.dll` |
 | `companion` | Python companion: `director/` package, `samples/state.json`, `tests/`; `campaigns/` (not in git) holds each campaign's logs, reports and story |
 | `tools/build.ps1` | Tests and builds the extension, copies the DLL into the mod root, runs the end-to-end test, runs `hemtt build` |
-| `tools/install.ps1`, `tools/start-session.ps1` | Install the built mod for real sessions; start a session (companion window + Arma with the group's mods) ([docs/hosting.md](docs/hosting.md)) |
+| `tools/install.cmd`, `tools/start-session.cmd` (and their `.ps1` scripts) | Install the built mod for real sessions; start a session (companion window + Arma with the group's mods); the `.cmd` launchers work from any terminal or a double-click ([docs/hosting.md](docs/hosting.md)) |
 | `tools/e2e_test.py`, `tools/rpt_lines.py` | End-to-end test without Arma; the director's lines from the latest `.rpt` ([docs/testing.md](docs/testing.md)) |
 
 ## Requirements
@@ -106,7 +106,7 @@ cd companion; .venv\Scripts\python -m unittest discover -s tests -t .
 
 ## Run
 
-For real sessions with the group, `tools\install.ps1` once and then `tools\start-session.ps1` each session do all of
+For real sessions with the group, `tools\install.cmd` once and then `tools\start-session.cmd` each session do all of
 this; see [docs/hosting.md](docs/hosting.md), which also covers a dedicated server. By hand, for development:
 
 1. Start the companion (keep the window open):

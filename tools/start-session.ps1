@@ -37,7 +37,7 @@ $root = Split-Path $PSScriptRoot -Parent
 $companion = Join-Path $root 'companion'
 
 if (-not (Test-Path (Join-Path $ModDir 'ai_director_x64.dll'))) {
-    throw "The director mod isn't installed in $ModDir; run tools\install.ps1 first."
+    throw "The director mod isn't installed in $ModDir; run tools\install.cmd first."
 }
 if (-not (Test-Path (Join-Path $companion '.venv\Scripts\python.exe'))) {
     throw 'The companion has no venv; see README: Setup.'

@@ -10,13 +10,13 @@ The host plays and hosts from the same PC, with the group's mod list (`.hemtt\pr
 **Once, and after each update of the director:**
 
 ```powershell
-tools\install.ps1          # tests, builds and installs the mod to install\@AIDirector (Arma closed)
+tools\install.cmd          # tests, builds and installs the mod to install\@AIDirector (Arma closed)
 ```
 
-**Each session:**
+**Each session** (from any terminal, or double-click the `.cmd` in Explorer):
 
 ```powershell
-tools\start-session.ps1                          # -Personality <style> (remembered), -Campaign <name>, -DryRun
+tools\start-session.cmd                          # -Personality <style> (remembered), -Campaign <name>, -DryRun
 ```
 
 It checks that every mod in the preset is downloaded, opens the companion in its own window (campaign
@@ -35,7 +35,7 @@ Notes:
   matter for joining a server without it.
 - **Starting from the launcher instead:** add `install\@AIDirector` once as a local mod
   (Mods > More > Add local mod), tick it in the preset, untick **Enable BattlEye** under Parameters, and start the
-  companion with `tools\start-session.ps1 -NoGame`.
+  companion with `tools\start-session.cmd -NoGame`.
 - **When the mod list changes:** export the preset from the launcher over `.hemtt\presets\infinizo.html` (used
   by `start-session.ps1`) and over `.hemtt\presets\infinizo.html` (used by `hemtt launch infinizo` for test
   sessions).
