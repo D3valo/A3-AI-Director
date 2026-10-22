@@ -7,6 +7,7 @@
         !director <anything else>   ask the director for something (sets AID_request)
         !director help | status | on | off | auto | propose
         !director style [balanced | cinematic | merciless | supportive | default]
+        !director test [full]       run the self-test against the sender (see AID_fnc_selfTest)
         !approve                    run the proposed decision
         !deny                       drop the proposed decision
 
@@ -42,6 +43,10 @@ switch (_command) do {
     case "!director": {
         private _styles = ["balanced", "cinematic", "merciless", "supportive"];
         private _style = ["companion's default", AID_personality] select (AID_personality != "");
+        if ((toLower (_words param [1, ""])) == "test") exitWith {
+            if (isNull _sender) exitWith { "The self-test needs a player to test against." call _reply };
+            [name _sender, (toLower (_words param [2, ""])) == "full", _owner] spawn AID_fnc_selfTest;
+        };
         if ((toLower (_words param [1, ""])) == "style") exitWith {
             private _choice = toLower (_words param [2, ""]);
             switch (true) do {
@@ -56,7 +61,7 @@ switch (_command) do {
         switch (toLower _rest) do {
             case "";
             case "help": {
-                "!director <what you want> | status | on | off | auto | propose | style <name>. !approve / !deny answer a proposal." call _reply;
+                "!director <what you want> | status | on | off | auto | propose | style <name> | test [full]. !approve / !deny answer a proposal." call _reply;
             };
             case "status": {
                 format [

@@ -3,6 +3,8 @@
 */
 params ["_name", "_function", "_data"];
 if (_name != "ai_director") exitWith {};
+// For the self-test, which pauses the director and waits for a reply.
+AID_lastCallback = [diag_tickTime, _function, _data];
 
 if (_function == "error") exitWith {
     diag_log format ["[AI Director] Companion error: %1", _data];

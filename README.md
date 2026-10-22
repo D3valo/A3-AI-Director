@@ -48,7 +48,8 @@ addons/main (SQF)                   companion/director
 | `addons/main` | SQF: state gathering, the callback handler, the actions, the off switch |
 | `extension` | Rust `cdylib` built on [arma-rs](https://github.com/BrettMayson/arma-rs); becomes `ai_director_x64.dll` |
 | `companion` | Python companion: `director/` package, `samples/state.json`, `tests/`; `campaigns/` (not in git) holds each campaign's logs, reports and story |
-| `tools/build.ps1` | Tests and builds the extension, copies the DLL into the mod root, runs `hemtt build` |
+| `tools/build.ps1` | Tests and builds the extension, copies the DLL into the mod root, runs the end-to-end test, runs `hemtt build` |
+| `tools/e2e_test.py`, `tools/rpt_lines.py` | End-to-end test without Arma; the director's lines from the latest `.rpt` ([docs/testing.md](docs/testing.md)) |
 
 ## Requirements
 
@@ -136,6 +137,7 @@ and players whose Steam UID is in `AID_chatUIDs` can use them; replies go to the
 | `!director on` / `!director off` | Turn the director on or off |
 | `!director auto` / `!director propose` | Run decisions at once, or wait for `!approve` |
 | `!director style <name>` | Change the director's personality: `balanced`, `cinematic`, `merciless`, `supportive`, or `default` (the companion's `--personality`); `!director style` shows the current one |
+| `!director test` / `!director test full` | Run the in-game self-test against yourself ([docs/testing.md](docs/testing.md)); `full` also launches an offensive, so only on a throwaway save |
 | `!director help` | List the commands |
 
 Players don't need the mod: the server sends the chat hook to every client, including players who join later.

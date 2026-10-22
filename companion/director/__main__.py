@@ -37,6 +37,7 @@ def main() -> None:
         help="the director's style, unless changed in game with !director style",
     )
     parser.add_argument("--campaign", default="default")
+    parser.add_argument("--campaigns-dir", type=Path, default=CAMPAIGNS_DIR, help="where campaigns are kept")
     commands = parser.add_subparsers(dest="command", required=True)
     serve_cmd = commands.add_parser("serve")
     serve_cmd.add_argument("--port", type=int, default=DEFAULT_PORT)
@@ -52,7 +53,7 @@ def main() -> None:
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
-    campaign = Campaign(CAMPAIGNS_DIR, args.campaign)
+    campaign = Campaign(args.campaigns_dir, args.campaign)
     backend = make_backend(args.backend)
 
     match args.command:

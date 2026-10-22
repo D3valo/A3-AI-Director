@@ -1,6 +1,7 @@
 <#
 .SYNOPSIS
-    Builds the extension and the mod: cargo build, copy the DLL into the mod root, hemtt build.
+    Builds the extension and the mod: cargo test and build, copy the DLL into the mod root, end-to-end test
+    (tools\e2e_test.py, offline), hemtt build.
 .PARAMETER Release
     Run `hemtt release` instead of `hemtt build` (signed PBOs and a zip in releases/).
 #>
@@ -22,6 +23,15 @@ try {
 }
 # Arma loads the 64-bit extension as <name>_x64.dll.
 Copy-Item (Join-Path $root 'extension\target\release\ai_director.dll') (Join-Path $root 'ai_director_x64.dll') -Force -ErrorAction Stop
+
+# End-to-end check of the built DLL against the companion (offline backend: no Claude calls).
+$python = Join-Path $root 'companion\.venv\Scripts\python.exe'
+if (Test-Path $python) {
+    & $python -I (Join-Path $root 'tools\e2e_test.py')
+    if ($LASTEXITCODE -ne 0) { throw 'end-to-end test failed' }
+} else {
+    Write-Warning 'companion\.venv not found; skipping the end-to-end test (see README: Setup)'
+}
 
 Push-Location $root
 try {
