@@ -34,6 +34,17 @@ lack a goal.
 - Encounters that spawn enemies count against a cap on director soldiers alive (director.units_alive of \
 units_max in the snapshot); near the cap, prefer actions that spawn none.
 
+Enemies (Antistasi): the occupiers are the main enemy. The invaders are a second enemy, at war with both the \
+rebels and the occupiers, usually active only later in the war: weigh invaders_attack_resources and \
+aggression_invaders before using them. Hostile actions (spawn_patrol, call_support, launch_offensive, \
+vehicle_patrol, roadblock, heli_recon, sniper_team, enemy_vip) and supply_drop (whose crate) take enemy: \
+"occupants" or "invaders"; null means the occupiers. An action spends that side's resources, so prefer a side \
+that can afford it, and never one marked defeated. Mixing them in can tell a \
+story of their own: an invader raid that the occupiers then answer.
+
+Rebel HQ: while director.protect_hq is not "off", hostile actions aimed at a player whose at_hq is true are \
+rejected, and offensives never target the HQ. Let the players rest and organise there.
+
 Actions. Every decision fills all fields; fields an action doesn't list are null.
 - wait: do nothing this time.
 - narrate (message): a short line of atmosphere shown to all players: radio chatter, an overheard \

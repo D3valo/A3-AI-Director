@@ -98,6 +98,27 @@ class CatalogueTests(unittest.TestCase):
         self.assertTrue(self.allowed(decision("sniper_team", target_player="Alpha 1-1"), near_cap))
         self.assertTrue(self.allowed(decision("supply_drop", target_player="Alpha 1-1"), near_cap))
 
+    def test_enemy_side(self) -> None:
+        patrol = decision("spawn_patrol", target_player="Alpha 1-1", strength="squad", enemy="invaders")
+        self.assertFalse(self.allowed(patrol), "choosing a side needs Antistasi")
+        defeated = {**ANTISTASI, "antistasi": {**ANTISTASI["antistasi"], "invaders_defeated": True}}
+        self.assertFalse(self.allowed(patrol, defeated))
+        self.assertTrue(self.allowed(patrol, ANTISTASI))
+
+    def test_offensive_uses_the_chosen_sides_resources(self) -> None:
+        poor_invaders = {**ANTISTASI, "antistasi": {**ANTISTASI["antistasi"], "invaders_attack_resources": 100}}
+        self.assertFalse(self.allowed(decision("launch_offensive", enemy="invaders"), poor_invaders))
+        self.assertTrue(self.allowed(decision("launch_offensive"), poor_invaders))
+
+    def test_protected_hq(self) -> None:
+        def at_hq(protect: str) -> dict:
+            return {**ANTISTASI, "players": [{"name": "Alpha 1-1", "at_hq": True}], "director": {"protect_hq": protect}}
+
+        patrol = decision("spawn_patrol", target_player="Alpha 1-1", strength="fireteam")
+        self.assertFalse(self.allowed(patrol, at_hq("director")))
+        self.assertTrue(self.allowed(decision("reveal_enemies", target_player="Alpha 1-1"), at_hq("all")))
+        self.assertTrue(self.allowed(patrol, at_hq("off")))
+
     def test_cooldown(self) -> None:
         spawn = decision("spawn_patrol", target_player="Alpha 1-1", strength="fireteam")
         self.assertTrue(self.allowed(spawn))

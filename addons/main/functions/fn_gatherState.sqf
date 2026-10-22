@@ -16,6 +16,7 @@ private _players = (allPlayers - entities "HeadlessClient_F") apply {
         ["pos", (getPosATL _player) apply { round _x }],
         ["in_vehicle", !isNull objectParent _player],
         ["group_size", { alive _x } count units group _player],
+        ["at_hq", "Synd_HQ" in allMapMarkers && { _player distance2D markerPos "Synd_HQ" < AID_hqRadius }],
         ["nearby_enemies_1km", {
             alive _x && { [side group _player, side group _x] call BIS_fnc_sideIsEnemy }
         } count (_player nearEntities ["CAManBase", 1000])]
@@ -37,6 +38,11 @@ private _state = createHashMapFromArray [
         // What the occupiers can spend on supports (call_support) and on attacks and patrols.
         ["occupants_defence_resources", round (missionNamespace getVariable ["A3A_resourcesDefenceOcc", -1])],
         ["occupants_attack_resources", round (missionNamespace getVariable ["A3A_resourcesAttackOcc", -1])],
+        // The invaders: a second enemy, at war with the occupiers too, usually active later in the war.
+        ["invaders_defence_resources", round (missionNamespace getVariable ["A3A_resourcesDefenceInv", -1])],
+        ["invaders_attack_resources", round (missionNamespace getVariable ["A3A_resourcesAttackInv", -1])],
+        ["occupants_defeated", missionNamespace getVariable ["areOccupantsDefeated", false]],
+        ["invaders_defeated", missionNamespace getVariable ["areInvadersDefeated", false]],
         ["rebel_money", _rebels getVariable ["resourcesFIA", -1]],
         ["rebel_recruits", _rebels getVariable ["hr", -1]],
         // Antistasi task codes: AS, CON, DES, LOG, SUPP, RES, CONVOY, ...
@@ -47,7 +53,8 @@ private _state = createHashMapFromArray [
     ["director", createHashMapFromArray [
         ["units_alive", [] call AID_fnc_directorUnits],
         ["units_max", AID_maxDirectorUnits],
-        ["personality", AID_personality]
+        ["personality", AID_personality],
+        ["protect_hq", AID_protectHQ]
     ]]
 ];
 if (_request != "") then { _state set ["request", _request] };

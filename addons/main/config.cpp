@@ -46,6 +46,8 @@ class CfgFunctions
             class capAllows {};
             class spawnVehicle {};
             class spawnInfantry {};
+            class atProtectedHQ {};
+            class protectHQ {};
             class initChat {};
             class chatCommand {};
         };

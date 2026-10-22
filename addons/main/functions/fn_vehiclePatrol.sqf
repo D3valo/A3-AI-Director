@@ -5,12 +5,13 @@
 
     Arguments:
     0: Player name <STRING>
+    1: Enemy side: "occupants", "invaders" or "" for the default (see AID_fnc_enemyFaction) <STRING>
 */
-params ["_playerName"];
+params ["_playerName", ["_enemy", ""]];
 
 private _target = [_playerName, "vehicle_patrol"] call AID_fnc_findPlayer;
 if (isNull _target) exitWith {};
-([] call AID_fnc_enemyFaction) params ["_side", "_faction"];
+([_enemy] call AID_fnc_enemyFaction) params ["_side", "_faction"];
 if (isNil "_faction") exitWith { diag_log "[AI Director] vehicle_patrol: needs Antistasi" };
 if !([8, "vehicle_patrol"] call AID_fnc_capAllows) exitWith {};
 

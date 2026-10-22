@@ -8,6 +8,7 @@
         !director help | status | on | off | auto | propose
         !director style [balanced | cinematic | merciless | supportive | default]
         !director test [full]       run the self-test against the sender (see AID_fnc_selfTest)
+        !director hq [off | director | all]   protection of the rebel HQ (see AID_fnc_init)
         !approve                    run the proposed decision
         !deny                       drop the proposed decision
 
@@ -49,6 +50,17 @@ switch (_command) do {
             if (isNull _sender) exitWith { "The self-test needs a player to test against." call _reply };
             [name _sender, (toLower (_words param [2, ""])) == "full", _owner] spawn AID_fnc_selfTest;
         };
+        if ((toLower (_words param [1, ""])) == "hq") exitWith {
+            private _choice = toLower (_words param [2, ""]);
+            private _meaning = createHashMapFromArray [
+                ["off", "the HQ is not protected"],
+                ["director", "the director won't attack the HQ or players at it"],
+                ["all", "neither the director nor Antistasi will attack the HQ"]
+            ];
+            if (_choice in _meaning) then { AID_protectHQ = _choice };
+            format ["HQ protection: %1 (%2). Options: off, director, all.", AID_protectHQ, _meaning get AID_protectHQ]
+                call _reply;
+        };
         if ((toLower (_words param [1, ""])) == "style") exitWith {
             private _choice = toLower (_words param [2, ""]);
             // Custom styles live in the companion's personalities.toml, so any one-word name is passed on; the
@@ -66,13 +78,13 @@ switch (_command) do {
         switch (toLower _rest) do {
             case "";
             case "help": {
-                "!director <what you want> | status | on | off | auto | propose | style <name> | test [full]. !approve / !deny answer a proposal." call _reply;
+                "!director <what you want> | status | on | off | auto | propose | style <name> | hq <off/director/all> | test [full]. !approve / !deny answer a proposal." call _reply;
             };
             case "status": {
                 format [
-                    "%1, %2 mode, every %3 s, style %4. Director soldiers alive: %5 of %6. Proposal waiting: %7.",
+                    "%1, %2 mode, every %3 s, style %4, HQ protection %8. Director soldiers alive: %5 of %6. Proposal waiting: %7.",
                     ["off", "on"] select AID_enabled, AID_mode, AID_interval, _style,
-                    [] call AID_fnc_directorUnits, AID_maxDirectorUnits, ["no", "yes"] select !isNil "AID_pending"
+                    [] call AID_fnc_directorUnits, AID_maxDirectorUnits, ["no", "yes"] select !isNil "AID_pending", AID_protectHQ
                 ] call _reply;
             };
             case "on": { AID_enabled = true; "On." call _reply };

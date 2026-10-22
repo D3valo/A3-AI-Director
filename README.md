@@ -28,6 +28,18 @@ Encounters are built from the enemy side's Antistasi templates for the war level
 up with Antistasi's own unit and vehicle functions, paid for from its attack resources, and despawned by Antistasi
 once no rebels are near. Those that spawn soldiers count against `AID_maxDirectorUnits`.
 
+**Which enemy.** Claude chooses, per hostile action, whether the occupiers or the invaders (Antistasi's second enemy)
+carry it out, spending that side's resources and never a defeated side. The default is the occupiers, or
+`AID_patrolSide` if set.
+
+**Rebel HQ.** `AID_protectHQ` (also `!director hq`) keeps attacks off the HQ:
+
+| Setting | Effect |
+| --- | --- |
+| `director` (default) | The director's offensives never pick the HQ, and its hostile encounters never target a player within `AID_hqRadius` (500 m) of it |
+| `all` | As `director`, and Antistasi's own attacks on the HQ are stopped too: Antistasi only targets the HQ once an enemy's HQ knowledge reaches 1, and the director holds it just below |
+| `off` | No protection |
+
 The actions are defined once in `companion/director/catalogue.py` (`ACTIONS`: fields, cooldown, Antistasi-only);
 the prompt in `prompt.py` tells Claude when each fits.
 
@@ -161,6 +173,7 @@ and players whose Steam UID is in `AID_chatUIDs` can use them; replies go to the
 | `!director on` / `!director off` | Turn the director on or off |
 | `!director auto` / `!director propose` | Run decisions at once, or wait for `!approve` |
 | `!director style <name>` | Change the director's style for this session: a built-in or custom style, or `default` (the campaign's own). If the companion doesn't know the name, it says so and keeps the campaign's. `!director style` shows the current one |
+| `!director hq off` / `director` / `all` | HQ protection (see Rebel HQ above); `!director hq` shows it |
 | `!director test` / `!director test full` | Run the in-game self-test against yourself ([docs/testing.md](docs/testing.md)); `full` also launches an offensive, so only on a throwaway save |
 | `!director help` | List the commands |
 
@@ -173,11 +186,12 @@ Players don't need the mod: the server sends the chat hook to every client, incl
 | `AID_enabled = false` | Off switch: stop sending states and ignore decisions |
 | `AID_chatUIDs = ["7656119..."]` | Extra players allowed to use the chat commands |
 | `AID_maxDirectorUnits = 24` | The most director-spawned soldiers alive at once; further patrols are refused (default 24) |
+| `AID_protectHQ = "all"`, `AID_hqRadius = 500` | HQ protection (above) and the radius that counts as at the HQ |
 | `AID_mode = "auto"` | Run decisions at once (default `"propose"`: announced in chat, wait for approval) |
 | `[] call AID_fnc_approve` | Run the proposed decision |
 | `AID_request = "send a patrol at us"` | Ask the director for something in plain words. Sent at once; the companion keeps it until a decision carries it out (cooldowns still apply) or Claude says it can't be done with the available actions |
 | `AID_interval = 60` | Seconds between states |
-| `AID_patrolSide = Invaders` | Side for patrols (default: Antistasi's `Occupants`, or `east` outside Antistasi) |
+| `AID_patrolSide = Invaders` | Side for hostile actions when Claude doesn't choose one (default: Antistasi's `Occupants`, or `east` outside Antistasi) |
 | `AID_patrolUnits` | Unit classes for patrols outside Antistasi (default: vanilla CSAT riflemen) |
 
 In Antistasi, patrols come from the side's faction template at the current war level (a 5-man fireteam or an 8-man

@@ -25,12 +25,19 @@ Strength = Literal["fireteam", "squad"]
 MissionType = Literal["assassination", "conquest", "destroy", "logistics", "supplies", "rescue", "convoy"]
 Weather = Literal["clear", "overcast", "rain", "storm", "fog"]
 Reward = Literal["small", "large"]
+Enemy = Literal["occupants", "invaders"]
 
 # Antistasi's task codes, as listed in the state's active_missions.
 MISSION_CODES: dict[str, str] = {
     "assassination": "AS", "conquest": "CON", "destroy": "DES", "logistics": "LOG",
     "supplies": "SUPP", "rescue": "RES", "convoy": "CONVOY",
 }
+# Hostile actions: carried out by the decision's enemy side, and never against a player at a protected HQ.
+# (supply_drop also uses the enemy side, for whose crate is dropped.)
+HOSTILE_ACTIONS = frozenset({
+    "spawn_patrol", "call_support", "launch_offensive", "vehicle_patrol", "roadblock", "heli_recon", "sniper_team",
+    "enemy_vip",
+})
 # Antistasi's attack costs at least this many attack resources.
 OFFENSIVE_MIN_ATTACK_RESOURCES = 400
 # Largest patrol of each strength (Antistasi fireteams are 5, vanilla ones 4), for the soldier cap; other
@@ -80,6 +87,8 @@ class Decision(BaseModel):
     mission_type: MissionType | None
     weather: Weather | None
     reward: Reward | None
+    # Which enemy carries out a hostile action; null means the occupiers (or the game's AID_patrolSide).
+    enemy: Enemy | None
     # True when this decision carries out the pending player request, or no action can satisfy it.
     request_done: bool
 
@@ -87,7 +96,7 @@ class Decision(BaseModel):
     def wait(cls, reason: str) -> Decision:
         return cls(
             action="wait", reason=reason, message=None, target_player=None, strength=None,
-            mission_type=None, weather=None, reward=None, request_done=False,
+            mission_type=None, weather=None, reward=None, enemy=None, request_done=False,
         )
 
 
@@ -112,10 +121,11 @@ DECISION_SCHEMA = {
         "mission_type": _nullable(_enum(MissionType)),
         "weather": _nullable(_enum(Weather)),
         "reward": _nullable(_enum(Reward)),
+        "enemy": _nullable(_enum(Enemy)),
         "request_done": {"type": "boolean"},
     },
     "required": [
-        "action", "reason", "message", "target_player", "strength", "mission_type", "weather", "reward",
+        "action", "reason", "message", "target_player", "strength", "mission_type", "weather", "reward", "enemy",
         "request_done",
     ],
     "additionalProperties": False,
@@ -159,8 +169,18 @@ def _problem(decision: Decision, state: dict, budget: Budget) -> str | None:
     for name in spec.fields:
         if getattr(decision, name) is None:
             return f"no {name}"
-    if "target_player" in spec.fields and decision.target_player not in {p.get("name") for p in state.get("players", [])}:
+    players = {p.get("name"): p for p in state.get("players", [])}
+    if "target_player" in spec.fields and decision.target_player not in players:
         return f"unknown target player {decision.target_player!r}"
+    if decision.action in HOSTILE_ACTIONS:
+        enemy = decision.enemy or "occupants"
+        if decision.enemy and antistasi.get("war_level", -1) < 0:
+            return "choosing the enemy side needs Antistasi"
+        if antistasi.get(f"{enemy}_defeated"):
+            return f"the {enemy} are defeated"
+        target = players.get(decision.target_player, {})
+        if target.get("at_hq") and state.get("director", {}).get("protect_hq", "off") != "off":
+            return f"{decision.target_player} is at the protected rebel HQ"
 
     director = state.get("director", {})
     soldiers =PATROL_SIZE[decision.strength] if decision.action == "spawn_patrol" else spec.soldiers
@@ -173,8 +193,10 @@ def _problem(decision: Decision, state: dict, budget: Budget) -> str | None:
             return f"a {decision.mission_type} mission is already active"
         case "launch_offensive" if antistasi.get("big_attack_in_progress"):
             return "a big attack is already in progress"
-        case "launch_offensive" if antistasi.get("occupants_attack_resources", 0) < OFFENSIVE_MIN_ATTACK_RESOURCES:
-            return "the occupiers can't afford an offensive"
+        case "launch_offensive" if (
+            antistasi.get(f"{decision.enemy or 'occupants'}_attack_resources", 0) < OFFENSIVE_MIN_ATTACK_RESOURCES
+        ):
+            return f"the {decision.enemy or 'occupants'} can't afford an offensive"
 
     remaining = budget.remaining(decision.action)
     if remaining > 0:

@@ -10,8 +10,9 @@
     Arguments:
     0: Player name <STRING>
     1: Strength, "fireteam" (4-5) or "squad" (8) <STRING>
+    2: Enemy side: "occupants", "invaders" or "" for the default (see AID_fnc_enemyFaction) <STRING>
 */
-params ["_playerName", "_strength"];
+params ["_playerName", "_strength", ["_enemy", ""]];
 
 private _target = [_playerName, "spawn_patrol"] call AID_fnc_findPlayer;
 if (isNull _target) exitWith {};
@@ -21,7 +22,7 @@ if !([[5, 8] select _isSquad, "spawn_patrol"] call AID_fnc_capAllows) exitWith {
 private _pos = [_target, 600, 1000] call AID_fnc_findSpawnPos;
 if (_pos isEqualTo []) exitWith { diag_log "[AI Director] spawn_patrol: no hidden position found" };
 
-([] call AID_fnc_enemyFaction) params ["_side", "_faction"];
+([_enemy] call AID_fnc_enemyFaction) params ["_side", "_faction"];
 private _antistasi = !isNil "_faction";
 private _group = grpNull;
 if (_antistasi) then {

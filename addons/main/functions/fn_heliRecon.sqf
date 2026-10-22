@@ -6,12 +6,13 @@
 
     Arguments:
     0: Player name <STRING>
+    1: Enemy side: "occupants", "invaders" or "" for the default (see AID_fnc_enemyFaction) <STRING>
 */
-params ["_playerName"];
+params ["_playerName", ["_enemy", ""]];
 
 private _target = [_playerName, "heli_recon"] call AID_fnc_findPlayer;
 if (isNull _target) exitWith {};
-([] call AID_fnc_enemyFaction) params ["_side", "_faction"];
+([_enemy] call AID_fnc_enemyFaction) params ["_side", "_faction"];
 if (isNil "_faction") exitWith { diag_log "[AI Director] heli_recon: needs Antistasi" };
 
 private _start = (_target getPos [3000, random 360]) vectorAdd [0, 0, 150];
