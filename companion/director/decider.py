@@ -96,7 +96,7 @@ class Director:
 
     def _ask(self, state: dict, personality: str) -> tuple[Decision, dict | None]:
         answer = self.backend.structured(
-            system_prompt(self.styles[personality]), self._message(state), DECISION_SCHEMA, self.effort, DECISION_TIMEOUT_SECONDS
+            self._system(personality), self._message(state), DECISION_SCHEMA, self.effort, DECISION_TIMEOUT_SECONDS
         )
         if answer.data is None:
             return Decision.wait(answer.error or "no answer"), answer.usage
@@ -106,11 +106,16 @@ class Director:
             log.error("Decision does not match the schema: %s", e)
             return Decision.wait("malformed decision"), answer.usage
 
-    def _message(self, state: dict) -> str:
-        parts = []
+    def _system(self, personality: str) -> list[str]:
+        """The parts that stay the same for the whole session (so the API backend can cache them): the rules
+        with the style, and the campaign's story so far."""
+        blocks = [system_prompt(self.styles[personality])]
         if self.story:
-            parts += ["Campaign story so far:", self.story, ""]
-        parts += [
+            blocks.append(f"Campaign story so far, from earlier sessions:\n{self.story}")
+        return blocks
+
+    def _message(self, state: dict) -> str:
+        parts = [
             "Recent decisions, oldest first:",
             json.dumps(list(self.recent), sort_keys=True),
             "",

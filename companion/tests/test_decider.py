@@ -18,8 +18,12 @@ class ScriptedBackend:
     def __init__(self, *answers: Decision | dict | None) -> None:
         self.answers = list(answers)
         self.messages: list[str] = []
+        self.systems: list[list[str]] = []
 
-    def structured(self, system: str, user: str, schema: dict, effort: str, timeout: float) -> Answer:
+    def structured(
+        self, system: list[str], user: str, schema: dict, effort: str, timeout: float, cache: bool = True
+    ) -> Answer:
+        self.systems.append(system)
         self.messages.append(user)
         answer = self.answers.pop(0)
         if answer is None:
@@ -86,15 +90,17 @@ class DirectorTests(unittest.TestCase):
         self.assertEqual(director.decide(STATE).action, "wait")
         self.assertEqual(director.decide(STATE).action, "wait")
 
-    def test_story_in_message(self) -> None:
+    def test_story_is_a_cached_system_block(self) -> None:
         backend = ScriptedBackend(Decision.wait("a"))
         Director(backend, self.log_dir, story="The cell hit a convoy at Kavala.").decide(STATE)
-        self.assertEqual(section(backend.messages[0], "Campaign story so far:"), "The cell hit a convoy at Kavala.")
+        self.assertEqual(len(backend.systems[0]), 2)
+        self.assertIn("The cell hit a convoy at Kavala.", backend.systems[0][1])
+        self.assertNotIn("Kavala", backend.messages[0])
 
     def test_no_story_section_without_story(self) -> None:
         backend = ScriptedBackend(Decision.wait("a"))
         Director(backend, self.log_dir).decide(STATE)
-        self.assertIsNone(section(backend.messages[0], "Campaign story so far:"))
+        self.assertEqual(len(backend.systems[0]), 1)
 
 
 if __name__ == "__main__":

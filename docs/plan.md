@@ -56,7 +56,7 @@ far, which the director reads next session.
 | Backend | Pays with | Notes |
 | --- | --- | --- |
 | `claude-code` (default) | The host's Claude subscription, through `claude -p` | Runs with `--safe-mode`, no tools, an empty working folder and no API key in its environment. Allowed for personal use of your own subscription; not for serving other people's requests, so a shared or public server should use `api`. Counts against the plan's usage limits. Measured: about 4 s, 2k input and 200 output tokens per decision |
-| `api` | An Anthropic API key (Claude Console) | Prompt caching and server-side refusal fallbacks (`fallbacks: "default"`). Estimated about $0.05 per decision at Opus 5.5 prices, so $1.50-3 an hour at one decision every 1-2 minutes; measure from the logged usage |
+| `api` | An Anthropic API key (Claude Console) | The system prompt (rules, style, campaign story) cached with a 1-hour TTL, and server-side refusal fallbacks (`fallbacks: "default"`). Estimated about $0.05 per decision at Opus 5.5 prices, so $1.50-3 an hour at one decision every 1-2 minutes; measure from the logged usage |
 | `offline` | Nothing | Always waits; tests the plumbing |
 
 Managed Agents and the Agent SDK were considered and rejected: each decision is a single quick structured answer

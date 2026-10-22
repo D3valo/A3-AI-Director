@@ -83,7 +83,10 @@ class Campaign:
             f"{session_digest(entries)}"
         )
         log.info("Writing the after-action report for %s ...", log_path.name)
-        answer = backend.structured(REPORT_PROMPT, user, REPORT_SCHEMA, REPORT_EFFORT, REPORT_TIMEOUT_SECONDS)
+        # Once per session, so not worth a cache write.
+        answer = backend.structured(
+            [REPORT_PROMPT], user, REPORT_SCHEMA, REPORT_EFFORT, REPORT_TIMEOUT_SECONDS, cache=False
+        )
         if answer.data is None:
             log.error("No report written: %s", answer.error)
             return None

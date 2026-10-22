@@ -10,18 +10,6 @@ from director.prompt import system_prompt
 from tests.test_decider import STATE, ScriptedBackend
 
 
-class Recorder(ScriptedBackend):
-    """A scripted backend that also records the system prompts it was given."""
-
-    def __init__(self, *answers) -> None:
-        super().__init__(*answers)
-        self.systems: list[str] = []
-
-    def structured(self, system, user, schema, effort, timeout):
-        self.systems.append(system)
-        return super().structured(system, user, schema, effort, timeout)
-
-
 def write(text: str) -> Path:
     path = Path(tempfile.mkdtemp()) / "personalities.toml"
     path.write_text(text, encoding="utf-8")
@@ -54,14 +42,15 @@ class DirectorStyleTests(unittest.TestCase):
         self.styles = {**personalities.BUILT_IN, "grimdark": "Bleak."}
 
     def test_game_chooses_and_reply_reports_the_style(self) -> None:
-        backend = Recorder(Decision.wait("a"), Decision.wait("b"), Decision.wait("c"))
+        backend = ScriptedBackend(Decision.wait("a"), Decision.wait("b"), Decision.wait("c"))
         director = Director(backend, self.log_dir, personality="cinematic", styles=self.styles)
         self.assertEqual(director.reply(STATE)["personality"], "cinematic")
         self.assertEqual(director.reply({**STATE, "director": {"personality": "grimdark"}})["personality"], "grimdark")
         # Unknown: falls back, and the reply tells the game which style it got instead.
         self.assertEqual(director.reply({**STATE, "director": {"personality": "nonsense"}})["personality"], "cinematic")
-        self.assertEqual(backend.systems, [system_prompt(self.styles["cinematic"]), system_prompt("Bleak."),
-                                           system_prompt(self.styles["cinematic"])])
+        self.assertEqual([s[0] for s in backend.systems], [system_prompt(self.styles["cinematic"]),
+                                                       system_prompt("Bleak."),
+                                                       system_prompt(self.styles["cinematic"])])
 
 
 class CampaignStyleTests(unittest.TestCase):

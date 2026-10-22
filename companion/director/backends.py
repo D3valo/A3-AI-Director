@@ -1,5 +1,6 @@
-"""Ways of asking Claude for a structured answer. Each backend takes a system prompt, a user message and
-a JSON schema, and returns the answer as a dict (or None with an error) plus usage details for the log.
+"""Ways of asking Claude for a structured answer. Each backend takes the system prompt as a list of blocks
+that stay the same for a whole session (so they can be cached), a user message and a JSON schema, and returns
+the answer as a dict (or None with an error) plus usage details for the log.
 
 - ClaudeCodeBackend runs the local `claude` CLI in print mode, on the Claude subscription it is logged
   in with. For personal use only: never use it to serve other people's requests.
@@ -26,6 +27,9 @@ API_MODEL = "claude-opus-5-5"
 # On a safety-classifier refusal the API retries on Anthropic's recommended fallback model.
 API_FALLBACK_BETA = "server-side-fallback-2026-07-01"
 CLAUDE_CODE_MODEL = "opus"
+# A decision every 90 s and pauses of up to 5 min (--max-skip) sit at the 5-minute TTL's edge; the 1-hour TTL
+# keeps the system prompt cached for the whole session, for a slightly dearer first write.
+CACHE_CONTROL = {"type": "ephemeral", "ttl": "1h"}
 
 
 @dataclass
@@ -38,32 +42,42 @@ class Answer:
 class Backend(Protocol):
     name: str
 
-    def structured(self, system: str, user: str, schema: dict, effort: str, timeout: float) -> Answer: ...
+    def structured(
+        self, system: list[str], user: str, schema: dict, effort: str, timeout: float, cache: bool = True
+    ) -> Answer: ...
 
 
 class OfflineBackend:
     name = "offline"
 
-    def structured(self, system: str, user: str, schema: dict, effort: str, timeout: float) -> Answer:
+    def structured(
+        self, system: list[str], user: str, schema: dict, effort: str, timeout: float, cache: bool = True
+    ) -> Answer:
         return Answer(None, error="offline mode")
 
 
 class ApiBackend:
     name = "api"
 
-    def __init__(self) -> None:
-        self.client = anthropic.Anthropic()
+    def __init__(self, client: anthropic.Anthropic | None = None) -> None:
+        self.client = client or anthropic.Anthropic()
 
-    def structured(self, system: str, user: str, schema: dict, effort: str, timeout: float) -> Answer:
+    def structured(
+        self, system: list[str], user: str, schema: dict, effort: str, timeout: float, cache: bool = True
+    ) -> Answer:
         try:
             response = self.client.with_options(timeout=timeout).beta.messages.create(
                 model=API_MODEL,
                 max_tokens=16000,
                 betas=[API_FALLBACK_BETA],
                 fallbacks="default",
-                cache_control={"type": "ephemeral"},
                 output_config={"effort": effort, "format": {"type": "json_schema", "schema": schema}},
-                system=system,
+                # The cache breakpoint goes on the last system block: everything before the user message.
+                system=[
+                    {"type": "text", "text": block}
+                    | ({"cache_control": CACHE_CONTROL} if cache and i == len(system) - 1 else {})
+                    for i, block in enumerate(system)
+                ],
                 messages=[{"role": "user", "content": user}],
             )
         except anthropic.APIStatusError as e:
@@ -74,6 +88,8 @@ class ApiBackend:
             return Answer(None, error="API unreachable")
 
         usage = response.usage.model_dump(exclude_none=True)
+        log.debug("Cache: %s tokens read, %s written", usage.get("cache_read_input_tokens", 0),
+                  usage.get("cache_creation_input_tokens", 0))
         if response.stop_reason != "end_turn":
             detail = response.stop_details.category if response.stop_details else None
             log.warning("No answer: stop_reason=%s detail=%s", response.stop_reason, detail)
@@ -95,7 +111,9 @@ class ClaudeCodeBackend:
         # Run outside any project so no project settings or files are picked up.
         self.cwd = tempfile.mkdtemp(prefix="ai-director-")
 
-    def structured(self, system: str, user: str, schema: dict, effort: str, timeout: float) -> Answer:
+    def structured(
+        self, system: list[str], user: str, schema: dict, effort: str, timeout: float, cache: bool = True
+    ) -> Answer:
         command = [
             self.executable,
             "-p",
@@ -107,7 +125,8 @@ class ClaudeCodeBackend:
             "--no-session-persistence",
             "--model", CLAUDE_CODE_MODEL,
             "--effort", effort,
-            "--system-prompt", system,
+            # Claude Code caches its own prompt; the blocks are one prompt here.
+            "--system-prompt", "\n\n".join(system),
             "--output-format", "json",
             "--json-schema", json.dumps(schema),
         ]

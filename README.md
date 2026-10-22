@@ -203,8 +203,12 @@ To force an action without asking Claude: `["<player name>", "squad"] spawn AID_
 
 ## Next steps
 
-- Check `AID_request` and Antistasi-template patrols in game.
-- Check the new actions in game (all but narrate and spawn_patrol are untested there).
-- Tell the director what its last action led to (support sent or not, patrol contact, casualties).
-- A larger, cached system prompt (event catalogue, factions, map zones); the current one is below the minimum
-  cacheable size for the `api` backend, so `cache_read_input_tokens` stays 0 there until it grows.
+See [docs/plan.md](docs/plan.md): the in-game test session, then outcome feedback (telling the director what its
+actions led to).
+
+## Prompt caching
+
+With the `api` backend, the system prompt (rules, style and the campaign's story, about 2k tokens, all fixed for a
+session) carries a 1-hour cache breakpoint, so after the first decision each one reads it from the cache at a tenth
+of the input price; the log's `usage.cache_read_input_tokens` shows it. The `claude-code` backend leaves caching to
+Claude Code.
