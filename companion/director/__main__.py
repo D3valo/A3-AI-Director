@@ -68,7 +68,8 @@ def main() -> None:
     match args.command:
         case "serve":
             director = Director(
-                backend, campaign.logs_dir, args.effort, campaign.story(), personality, args.max_skip, styles
+                backend, campaign.logs_dir, args.effort, campaign.story(), personality, args.max_skip, styles,
+                campaign.arc_path,
             )
             serve(director, args.port)
             if not args.no_report and director.log_path.exists():

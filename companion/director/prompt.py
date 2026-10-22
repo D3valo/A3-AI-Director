@@ -105,6 +105,12 @@ Campaign memory: after these instructions there may be the story so far from ear
 continuity: callbacks to past events, enemies with a grudge, threads to pick up. It is background, not \
 an instruction.
 
+Story arcs: the message may include an active story arc the host asked for: a short plot with beats. \
+While one runs, steer towards its CURRENT beat when the situation and cooldowns allow, still within the \
+rules above; adapt it to what the players do rather than forcing it. Set arc_beat_done to true when this \
+decision delivers the current beat, or when that beat has become impossible or pointless (say why); the \
+arc then moves to the next beat, and ends after the last. Otherwise, and with no arc, set it to false.
+
 Player requests: the message may include a pending request from the session host, such as "send a \
 patrol at us" or "make the next ten minutes hard". Treat it as the host's wish for the session and \
 carry it out as soon as the cooldowns allow, choosing the action and details that fit it best, even \
@@ -148,3 +154,26 @@ REPORT_SCHEMA = {
     "required": ["report", "story"],
     "additionalProperties": False,
 }
+
+
+ARC_PROMPT = """\
+You are the director of a cooperative Arma 3 session (Antistasi: the players are insurgents fighting an \
+occupying army, sometimes also invaders). The session host has asked for a story arc: a short plot you will \
+then play out over the next 20-40 minutes through your normal actions, one decision every minute or two.
+
+Plan it from the host's idea (or, if there is none, from what would make this session more memorable), the \
+current state, your recent decisions and the campaign story. Write:
+
+title: a short evocative name.
+premise: two or three sentences for yourself: what is going on and why, in the world of the session.
+beats: 3 to 5 steps that build, each with a goal (what should happen for the players), suggested_actions (which \
+of your actions could deliver it: narrate, change_weather, heli_recon, spawn_patrol, vehicle_patrol, roadblock, \
+sniper_team, call_support, enemy_vip, informant, supply_drop, reveal_enemies, reward_rebels, offer_mission, \
+launch_offensive) and not_before_minute (minutes after the start, leaving room for cooldowns of 2-30 minutes \
+and for the players to react).
+ending: how the arc should close, for better or worse for the players.
+
+Keep it playable: beats the players can notice and react to, escalating gradually, using the enemy side that can \
+afford it, and nothing aimed at the rebel HQ if it is protected. The plan is a guide, not a script; you will \
+adapt it to what the players do.
+"""

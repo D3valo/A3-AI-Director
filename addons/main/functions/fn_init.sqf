@@ -17,6 +17,8 @@
                        encounters against players within AID_hqRadius of it); "all": Antistasi's own attacks on
                        the HQ are stopped too; "off": no protection.
     AID_hqRadius     - metres around the HQ that count as at the HQ (default 500).
+    AID_arcRequest   - ["start", idea] or ["stop", ""]: asks the companion to plan or stop a story arc (set
+                       by !director arc). Sent at once, then cleared.
     AID_personality  - the director's style for this session (a built-in or custom style); "" uses the
                        campaign's.
 */
@@ -43,6 +45,9 @@ diag_log format ["[AI Director] Extension %1 loaded.", _version select 0];
     ["AID_hqRadius", 500]
 ];
 AID_pending = nil;
+AID_arcRequest = [];
+AID_arcStatus = "";  // the running arc, as last reported by the companion
+AID_arcOwner = 2;    // who asked for it: arc news goes to them only
 AID_spawnedGroups = [];
 
 addMissionEventHandler ["ExtensionCallback", { _this call AID_fnc_onCallback }];

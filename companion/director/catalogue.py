@@ -91,12 +91,14 @@ class Decision(BaseModel):
     enemy: Enemy | None
     # True when this decision carries out the pending player request, or no action can satisfy it.
     request_done: bool
+    # True when this decision delivers the active story arc's current beat (see arcs.py).
+    arc_beat_done: bool
 
     @classmethod
     def wait(cls, reason: str) -> Decision:
         return cls(
             action="wait", reason=reason, message=None, target_player=None, strength=None,
-            mission_type=None, weather=None, reward=None, enemy=None, request_done=False,
+            mission_type=None, weather=None, reward=None, enemy=None, request_done=False, arc_beat_done=False,
         )
 
 
@@ -123,10 +125,11 @@ DECISION_SCHEMA = {
         "reward": _nullable(_enum(Reward)),
         "enemy": _nullable(_enum(Enemy)),
         "request_done": {"type": "boolean"},
+        "arc_beat_done": {"type": "boolean"},
     },
     "required": [
         "action", "reason", "message", "target_player", "strength", "mission_type", "weather", "reward", "enemy",
-        "request_done",
+        "request_done", "arc_beat_done",
     ],
     "additionalProperties": False,
 }

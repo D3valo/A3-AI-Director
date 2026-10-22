@@ -24,6 +24,20 @@ if (_asked != "" && { AID_lastStyle != _asked }) then {
         remoteExec ["systemChat", 0];
     if (AID_personality == _asked) then { AID_personality = "" };
 };
+// The story arc's progress. News of it goes only to whoever started it, so the plot isn't spoiled.
+private _arc = _decision getOrDefault ["arc", createHashMap];
+if (isNil "_arc" || { !(_arc isEqualType createHashMap) }) then { _arc = createHashMap };
+private _title = _arc getOrDefault ["title", ""];
+AID_arcStatus = ["", format ["""%1"", beat %2 of %3", _title, _arc get "beat", _arc get "beats"]] select (_title != "");
+private _news = switch (_arc getOrDefault ["event", ""]) do {
+    case "started": { format ["Story arc begins: ""%1"" (%2 beats). !director arc status or stop.", _title, _arc get "beats"] };
+    case "completed": { format ["Story arc complete: ""%1"".", _title] };
+    case "stopped": { format ["Story arc stopped: ""%1"".", _title] };
+    case "failed": { "The companion couldn't plan a story arc; see its window." };
+    default { "" };
+};
+if (_news != "") then { [format ["[Director] %1", _news]] remoteExec ["systemChat", AID_arcOwner] };
+if ((_arc getOrDefault ["event", ""]) in ["completed", "stopped"]) then { AID_arcStatus = "" };
 private _action = _decision getOrDefault ["action", "wait"];
 private _reason = _decision getOrDefault ["reason", ""];
 diag_log format ["[AI Director] Decision %1: %2", _action, _reason];

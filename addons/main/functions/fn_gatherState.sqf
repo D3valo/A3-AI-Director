@@ -4,8 +4,9 @@
 
     Arguments:
     0: New request from the host, sent once, or "" <STRING>
+    1: New story arc request, sent once: ["start", idea] or ["stop", ""], or [] <ARRAY>
 */
-params [["_request", "", [""]]];
+params [["_request", "", [""]], ["_arcRequest", [], [[]]]];
 
 private _players = (allPlayers - entities "HeadlessClient_F") apply {
     private _player = _x;
@@ -58,4 +59,8 @@ private _state = createHashMapFromArray [
     ]]
 ];
 if (_request != "") then { _state set ["request", _request] };
+if (_arcRequest isNotEqualTo []) then {
+    _arcRequest params ["_kind", "_idea"];
+    _state set ["arc_request", createHashMapFromArray [["text", _idea], ["stop", _kind == "stop"]]];
+};
 toJSON _state

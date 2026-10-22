@@ -158,6 +158,7 @@ separate games don't mix:
 | `logs\decisions-*.jsonl` | Every decision of a session with the state, Claude's reason and token usage |
 | `reports\decisions-*.md` | After-action report for each session, written for the players |
 | `story.md` | The story so far, rewritten after each session; the director reads it as background for continuity. Edit it freely, or delete it to start the campaign's story afresh |
+| `arc.json` | The story arc in progress, if any |
 | `campaign.json` | Settings that stick to the campaign: its style (`{"personality": "cinematic"}`), saved by `serve --personality` |
 
 ## Chat commands
@@ -174,6 +175,7 @@ and players whose Steam UID is in `AID_chatUIDs` can use them; replies go to the
 | `!director auto` / `!director propose` | Run decisions at once, or wait for `!approve` |
 | `!director style <name>` | Change the director's style for this session: a built-in or custom style, or `default` (the campaign's own). If the companion doesn't know the name, it says so and keeps the campaign's. `!director style` shows the current one |
 | `!director hq off` / `director` / `all` | HQ protection (see Rebel HQ above); `!director hq` shows it |
+| `!director arc <idea>` / `arc` / `arc status` / `arc stop` | Start a story arc from your idea (or the director's own), show the running one, or stop it ([Story arcs](#story-arcs)) |
 | `!director test` / `!director test full` | Run the in-game self-test against yourself ([docs/testing.md](docs/testing.md)); `full` also launches an offensive, so only on a throwaway save |
 | `!director help` | List the commands |
 
@@ -205,6 +207,17 @@ To force an action without asking Claude: `["<player name>", "squad"] spawn AID_
 
 See [docs/plan.md](docs/plan.md): the in-game test session, then outcome feedback (telling the director what its
 actions led to).
+
+## Story arcs
+
+`!director arc the occupiers hunt the cell that ambushed their convoy` (or just `!director arc`) has Claude plan a
+short plot from the idea, the game state and the campaign story: a title, a premise, 3-5 beats with suggested actions
+and earliest minutes, and an ending. For the next 20-40 minutes every decision sees the arc and steers towards its
+current beat, through the normal actions, cooldowns and limits; a decision that delivers a beat moves it on. Only the
+player who started it hears the arc's news (begins, complete, stopped), so the plot isn't spoiled for the others.
+`!director arc status` shows the beat; `!director arc stop` ends it; a new arc replaces the running one. The running
+arc is saved in `campaigns\<name>rc.json`, so it survives a companion restart, and the after-action report covers
+it. While an arc runs, the director asks Claude every time instead of skipping quiet moments.
 
 ## Prompt caching
 

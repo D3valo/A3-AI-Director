@@ -8,6 +8,8 @@
         !director help | status | on | off | auto | propose
         !director style [balanced | cinematic | merciless | supportive | default]
         !director test [full]       run the self-test against the sender (see AID_fnc_selfTest)
+        !director arc [idea | status | stop]  plan a story arc from the idea (or the director's own), show the
+                                    running one, or stop it
         !director hq [off | director | all]   protection of the rebel HQ (see AID_fnc_init)
         !approve                    run the proposed decision
         !deny                       drop the proposed decision
@@ -50,6 +52,21 @@ switch (_command) do {
             if (isNull _sender) exitWith { "The self-test needs a player to test against." call _reply };
             [name _sender, (toLower (_words param [2, ""])) == "full", _owner] spawn AID_fnc_selfTest;
         };
+        if ((toLower (_words param [1, ""])) == "arc") exitWith {
+            private _idea = (_words select [2]) joinString " ";
+            switch (toLower _idea) do {
+                case "status": {
+                    (["No story arc is running.", format ["Story arc: %1.", AID_arcStatus]] select (AID_arcStatus != ""))
+                        call _reply;
+                };
+                case "stop": { AID_arcRequest = ["stop", ""]; AID_arcOwner = _owner; "Stopping the story arc." call _reply };
+                default {
+                    AID_arcRequest = ["start", _idea];
+                    AID_arcOwner = _owner;
+                    "Planning a story arc; that takes a minute. You'll get its title here." call _reply;
+                };
+            };
+        };
         if ((toLower (_words param [1, ""])) == "hq") exitWith {
             private _choice = toLower (_words param [2, ""]);
             private _meaning = createHashMapFromArray [
@@ -78,7 +95,7 @@ switch (_command) do {
         switch (toLower _rest) do {
             case "";
             case "help": {
-                "!director <what you want> | status | on | off | auto | propose | style <name> | hq <off/director/all> | test [full]. !approve / !deny answer a proposal." call _reply;
+                "!director <what you want> | status | on | off | auto | propose | style <name> | hq <off/director/all> | arc [idea/status/stop] | test [full]. !approve / !deny answer a proposal." call _reply;
             };
             case "status": {
                 format [

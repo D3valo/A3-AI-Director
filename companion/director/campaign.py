@@ -4,6 +4,7 @@
     campaigns/<name>/reports/<log name>.md    after-action report for each session
     campaigns/<name>/story.md                 the story so far, which the director reads every session
     campaigns/<name>/campaign.json            settings that stick to the campaign: {"personality": "cinematic"}
+    campaigns/<name>/arc.json                 the story arc in progress, if any (see arcs.py)
 
 After a session, Claude reads a digest of its decision log and writes the report and an updated story.
 """
@@ -33,6 +34,7 @@ class Campaign:
         self.reports_dir = self.dir / "reports"
         self.story_path = self.dir / "story.md"
         self.settings_path = self.dir / "campaign.json"
+        self.arc_path = self.dir / "arc.json"
         for d in (self.logs_dir, self.reports_dir):
             d.mkdir(parents=True, exist_ok=True)
 
@@ -117,24 +119,43 @@ def session_digest(entries: list[dict]) -> str:
         "Timeline (game time, then what the director did and why):",
     ]
     waits = 0
+    beats_done = 0
+
+    def note(line: str) -> None:
+        nonlocal waits
+        if waits:
+            lines.append(f"- ({waits} waits)")
+            waits = 0
+        lines.append(line)
+
     for entry in entries:
         decision, state = entry["decision"], entry["state"]
         when = _game_time(state.get("time"))
         if entry.get("personality", style) != style:
             style = entry["personality"]
-            lines.append(f"- {when} style changed to {style}")
+            note(f"- {when} style changed to {style}")
         if entry.get("new_request"):
-            lines.append(f"- {when} host request: {entry['new_request']}")
+            note(f"- {when} host request: {entry['new_request']}")
+        arc = entry.get("arc") or {}
+        match arc.get("event"):
+            case "started":
+                beats_done = 0
+                note(f'- {when} story arc started: "{arc["title"]}" ({arc["beats"]} beats). {arc.get("premise", "")}')
+            case "failed":
+                note(f"- {when} a story arc was asked for but could not be planned")
         if decision["action"] == "wait" and not decision["reason"].startswith("rejected"):
             waits += 1
-            continue
-        if waits:
-            lines.append(f"- ({waits} waits)")
-            waits = 0
-        details = ", ".join(
-            f"{k}={v}" for k, v in decision.items() if k not in ("action", "reason", "request_done") and v is not None
-        )
-        lines.append(f"- {when} {decision['action']}{f' ({details})' if details else ''}: {decision['reason']}")
+        else:
+            details = ", ".join(
+                f"{k}={v}" for k, v in decision.items()
+                if k not in ("action", "reason", "request_done", "arc_beat_done") and v is not None
+            )
+            note(f"- {when} {decision['action']}{f' ({details})' if details else ''}: {decision['reason']}")
+        if arc.get("title") and arc.get("event") != "started" and arc.get("beat", 0) - 1 > beats_done:
+            beats_done = arc["beat"] - 1
+            note(f'- {when} arc "{arc["title"]}": beat {beats_done} of {arc["beats"]} done')
+        if arc.get("event") in ("completed", "stopped"):
+            note(f'- {when} story arc {arc["event"]}: "{arc["title"]}"')
     if waits:
         lines.append(f"- ({waits} waits)")
     return "\n".join(lines)

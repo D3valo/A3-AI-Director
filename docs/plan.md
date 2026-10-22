@@ -88,6 +88,7 @@ about the local game, not a long-running agent with a workspace.
 | Comfort: skipping unchanged states, personalities, soldier cap | Built; personalities tested against Claude, the rest by unit tests; not in game |
 | Custom and per-campaign styles | Built, unit tests; not in game |
 | Seven more encounters | Built, chosen sensibly by Claude in sample scenarios; not in game |
+| Enemy side choice, HQ protection, API prompt caching, story arcs | Built; arcs planned live by Claude; not in game |
 
 ## Next
 
@@ -103,7 +104,9 @@ about the local game, not a long-running agent with a workspace.
 4. **More encounters (done):** vehicle patrol, roadblock, helicopter recon, sniper team, informant, supply drop and
    enemy VIP, all from Antistasi's templates and functions; in the self-test, not yet played. Deserters were
    left out: recruits already come from reward_rebels.
-5. **Story arcs:** short multi-step plots planned across several decisions, building on 3 and the campaign story.
+5. **Story arcs (done):** started with `!director arc [idea]`: Claude plans a titled arc with 3-5 beats, decisions steer
+   towards the current beat and mark it done, the arc survives restarts and appears in the report. The director
+   doesn't start arcs on its own yet.
 6. **Comfort and cost (done):** Claude is skipped while nothing important changes (asked at least every 5
    minutes, and always for a host request), four personalities (`--personality`, `!director style`), and a cap on
    director-spawned soldiers alive (`AID_maxDirectorUnits`, checked by the companion and the game).
