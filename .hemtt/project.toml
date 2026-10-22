@@ -29,3 +29,8 @@ workshop = [
     "450814997",  # CBA_A3
     "3020755032", # Antistasi Ultimate
 ]
+
+# `hemtt launch infinizo` starts Arma 3 with the dev build plus the group's real mod list, exported from the Arma 3
+# Launcher. Copy a new export over .hemtt/presets/infinizo.html when the list changes.
+[hemtt.launch.infinizo]
+presets = ["infinizo"]

@@ -49,6 +49,7 @@ addons/main (SQF)                   companion/director
 | `extension` | Rust `cdylib` built on [arma-rs](https://github.com/BrettMayson/arma-rs); becomes `ai_director_x64.dll` |
 | `companion` | Python companion: `director/` package, `samples/state.json`, `tests/`; `campaigns/` (not in git) holds each campaign's logs, reports and story |
 | `tools/build.ps1` | Tests and builds the extension, copies the DLL into the mod root, runs the end-to-end test, runs `hemtt build` |
+| `tools/install.ps1`, `tools/start-session.ps1` | Install the built mod for real sessions; start a session (companion window + Arma with the group's mods) ([docs/hosting.md](docs/hosting.md)) |
 | `tools/e2e_test.py`, `tools/rpt_lines.py` | End-to-end test without Arma; the director's lines from the latest `.rpt` ([docs/testing.md](docs/testing.md)) |
 
 ## Requirements
@@ -82,6 +83,9 @@ cd companion; .venv\Scripts\python -m unittest discover -s tests -t .
 
 ## Run
 
+For real sessions with the group, `tools\install.ps1` once and then `tools\start-session.ps1` each session do all of
+this; see [docs/hosting.md](docs/hosting.md), which also covers a dedicated server. By hand, for development:
+
 1. Start the companion (keep the window open):
 
    ```powershell
@@ -90,7 +94,7 @@ cd companion; .venv\Scripts\python -m unittest discover -s tests -t .
    ```
 
    One decision for a saved state, without the game: `.venv\Scripts\python -m director decide samples\state.json`.
-2. Start Arma with the mod: `hemtt launch` (CBA only) or `hemtt launch antistasi`, with BattlEye off. On a
+2. Start Arma with the mod: `hemtt launch` (CBA only), `hemtt launch antistasi`, or `hemtt launch infinizo` (the group's mods), with BattlEye off. On a
    dedicated server, load the built mod with `-serverMod=`; clients don't need it.
 3. Host a mission. The server's `.rpt` shows `[AI Director] Extension 0.1.0 loaded.` and then one line per
    decision.

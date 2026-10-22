@@ -89,11 +89,11 @@ about the local game, not a long-running agent with a workspace.
 
 ## Next
 
-1. **Test session** on a throwaway Antistasi save: every action, the chat commands, a session report.
-2. **Real game setup** with the group's mod list (`.hemtt\presets\infinizo.html`): load the mod as a local
-   mod on the host, BattlEye off, and start the companion with the game. Sessions will start on the host's own PC
-   (companion and Arma side by side); a dedicated server may follow, which needs the companion and its Claude
-   login (or an API key) on that machine.
+1. **Test session (tooling done):** an end-to-end test without Arma (`tools/e2e_test.py`, passing) and an in-game
+   self-test (`!director test`); the in-game session itself is still to do ([testing.md](testing.md)).
+2. **Real game setup (done):** `tools/install.ps1` installs the mod to `install\@AIDirector`, and
+   `tools/start-session.ps1` starts the companion and Arma with the group's 146 mods, BattlEye off ([hosting.md](hosting.md)).
+   Sessions start on the host's own PC; hosting.md also covers a later dedicated server.
 3. **Outcome feedback:** tell the director what its actions led to (patrol contact and losses, what support
    Antistasi sent or that it sent nothing, missions taken up or finished) and recent events (players downed,
    towns changing hands, attacks starting and ending), plus where players are in Antistasi's world (nearest
