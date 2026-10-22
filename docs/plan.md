@@ -89,7 +89,8 @@ about the local game, not a long-running agent with a workspace.
 | Custom and per-campaign styles | Built, unit tests; not in game |
 | Seven more encounters | Built, chosen sensibly by Claude in sample scenarios; not in game |
 | Enemy side choice, HQ protection, API prompt caching, story arcs | Built; arcs planned live by Claude; not in game |
-| Outcome feedback | Built; Claude used it in a sample state (adapted after a wiped-out patrol and a denied proposal); not in game |
+| Outcome feedback | Tested in game (2026-10-22, about 80 minutes on the Infinizo mod list) |
+| First in-game session | Every action and the chat commands (story arcs not tried yet); full self-test 19 passed, 1 warning (no offensive affordable); 24 issues found and fixed (cooldowns shown to Claude, friendly forces, request news in chat, setup gate, supply drop height, unique place names, mission results, pacing in battles, self-test accuracy and more) |
 
 ## Next
 

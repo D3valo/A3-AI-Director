@@ -49,6 +49,16 @@ private _waitFor = {
 [format ["[Director test] Testing against %1; the director is paused until the test ends.", _playerName]]
     remoteExec ["systemChat", _owner];
 
+// Records from here on are the test's own; they are removed at the end so the director isn't told about them.
+private _eventSeqBefore = AID_eventSeq;
+private _encounterSeqBefore = AID_encounterSeq;
+// Hostile actions are never aimed at a player at the protected HQ, and the test keeps to that too.
+private _hostileOK = !([_playerName] call AID_fnc_atProtectedHQ);
+private _skip = {
+    [_this, false, "skipped: you are at the protected HQ; move away from it (or !director hq off) to test this", true]
+        call _report;
+};
+
 // Plumbing
 private _version = "ai_director" callExtension ["version", []];
 ["extension", (_version select 1) == 0, format ["version %1", _version select 0]] call _report;
@@ -65,7 +75,7 @@ private _antistasi = !isNil "A3A_fnc_requestSupport" && { (_antistasiState getOr
     call _report;
 
 AID_lastCallback = nil;
-"ai_director" callExtension ["send_state", [[""] call AID_fnc_gatherState]];
+"ai_director" callExtension ["send_state", [["", [], [], true] call AID_fnc_gatherState]];
 private _replied = [{ !isNil "AID_lastCallback" }, 150] call _waitFor;
 if (_replied) then {
     AID_lastCallback params ["", "_function", "_data"];
@@ -84,9 +94,9 @@ createHashMapFromArray [["action", "narrate"], ["message", "Director self-test: 
 ["narrate", true, "a hint was sent to every player; check it appeared"] call _report;
 
 private _groupsBefore = +AID_spawnedGroups;
-[_playerName, "fireteam"] call AID_fnc_spawnPatrol;
+if (_hostileOK) then { [_playerName, "fireteam"] call AID_fnc_spawnPatrol };
 private _testGroups = AID_spawnedGroups - _groupsBefore;
-if (_testGroups isEqualTo []) then {
+if (!_hostileOK) then { "spawn_patrol" call _skip } else { if (_testGroups isEqualTo []) then {
     ["spawn_patrol", false, "no patrol spawned; see the .rpt"] call _report;
 } else {
     private _group = _testGroups select 0;
@@ -97,7 +107,7 @@ if (_testGroups isEqualTo []) then {
         count units _group, side _group, _expectedSide, typeOf _leader,
         _leader getVariable ["unitType", "none"], round (_leader distance2D _target)
     ]] call _report;
-};
+}; };
 
 private _cap = AID_maxDirectorUnits;
 AID_maxDirectorUnits = [] call AID_fnc_directorUnits;
@@ -139,15 +149,15 @@ if (_antistasi) then {
 
     private _strikesBefore = +(missionNamespace getVariable ["A3A_supportStrikes", []]);
     private _activeBefore = +(missionNamespace getVariable ["A3A_activeSupports", []]);
-    [_playerName] call AID_fnc_callSupport;
-    private _sent = [{
+    if (_hostileOK) then { [_playerName] call AID_fnc_callSupport };
+    private _sent = _hostileOK && { [{
         ((missionNamespace getVariable ["A3A_supportStrikes", []]) findIf { !(_x in _strikesBefore) } >= 0)
         || { (missionNamespace getVariable ["A3A_activeSupports", []]) findIf { !(_x in _activeBefore) } >= 0 }
-    }, 20] call _waitFor;
-    ["call_support", _sent, [
+    }, 20] call _waitFor };
+    if (!_hostileOK) then { "call_support" call _skip } else { ["call_support", _sent, [
         "Antistasi sent nothing (low defence resources or no safe option); see 'support' lines in the .rpt",
         "Antistasi sent a support; expect a QRF, fire or aircraft"
-    ] select _sent, true] call _report;
+    ] select _sent, true] call _report; };
 
     if (_full) then {
         [] call AID_fnc_launchOffensive;
@@ -173,7 +183,13 @@ private _walking = [{ !isNull AID_lastInformant }, 10] call _waitFor;
     format ["a civilian is walking to you from %1 m; reach them for a hint and intel markers",
         round (AID_lastInformant distance2D _target)]] select _walking] call _report;
 
-if (_antistasi) then {
+if (_antistasi && { !_hostileOK }) then {
+    { _x call _skip } forEach ["vehicle_patrol", "roadblock", "sniper_team", "heli_recon", "enemy_vip"];
+    [_playerName] spawn AID_fnc_supplyDrop;
+    private _dropping = [{ ["AID_drop_"] call _markerExists }, 15] call _waitFor;
+    ["supply_drop", _dropping, "a crate is parachuting in nearby, marked on the map"] call _report;
+};
+if (_antistasi && { _hostileOK }) then {
     [_playerName] call AID_fnc_vehiclePatrol;
     ["vehicle_patrol", call _inVehicle, "an armed vehicle with a fireteam (see the .rpt for type and distance)"]
         call _report;
@@ -204,7 +220,9 @@ if (_antistasi) then {
 AID_maxDirectorUnits = _cap;
 
 // Clean up the test soldiers and their vehicles; everything else (informant, crate, markers) stays as the real
-// actions would leave it.
+// actions would leave it. The director forgets the test's encounters and outcomes first: they weren't its doing.
+AID_encounters = AID_encounters select { (_x get "id") <= _encounterSeqBefore };
+AID_events = AID_events select { (_x get "id") <= _eventSeqBefore || { (_x get "kind") != "outcome" } };
 {
     private _group = _x;
     { deleteVehicle objectParent _x; deleteVehicle _x } forEach units _group;

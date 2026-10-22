@@ -28,6 +28,11 @@ ARC_TIMEOUT_SECONDS = 180
 DEFAULT_MAX_SKIP_SECONDS = 300
 
 
+def _minute(state: dict) -> int:
+    """Game time in whole minutes, the unit of everything Claude sees."""
+    return round(state.get("time", 0) / 60)
+
+
 class Director:
     def __init__(
         self,
@@ -54,8 +59,10 @@ class Director:
         self.unseen_events: list = []
         self.budget = Budget()
         self.recent: deque[dict] = deque(maxlen=RECENT_DECISIONS)
-        # The host's latest request, kept until a decision carries it out or declines it.
+        # The host's latest request, kept until a decision carries it out or declines it, and what the host should
+        # hear about it after the current decision (see _request_news).
         self.request: dict | None = None
+        self.request_news = ""
         # The active story arc (kept in the campaign so it survives a restart), and what happened to it in the
         # current decision ("started", "completed", "stopped", "failed" or ""), reported back to the game.
         self.arc_path = arc_path
@@ -72,19 +79,22 @@ class Director:
             started = time.monotonic()
             self.arc_event = ""
             self.ended_arc = None
+            self.request_news = ""
             # The game sends a request once; it replaces any earlier one still pending.
             state = dict(state)
             request = state.pop("request", None)
             if isinstance(request, str) and request.strip():
-                self.request = {"text": request.strip()[:MAX_REQUEST_CHARS], "since_game_time": state.get("time")}
+                self.request = {"text": request.strip()[:MAX_REQUEST_CHARS], "since_minute": _minute(state)}
                 log.info("Request from the host: %s", self.request["text"])
+            # The self-test's state must reach Claude, never the pacer.
+            self_test = bool(state.pop("self_test", False))
             arc_request = state.pop("arc_request", None)
             if isinstance(arc_request, dict):
                 self._handle_arc_request(arc_request, state)
 
             personality = self._personality(state)
             self.last_personality = personality
-            busy = self.request is not None or self.arc is not None or has_news(state)
+            busy = self.request is not None or self.arc is not None or has_news(state) or self_test
             if self.pacer.should_skip(state, has_request=busy):
                 # Not added to the recent decisions Claude sees: it didn't make this one. Its events (kill
                 # tallies) go with the next state Claude does see.
@@ -97,13 +107,14 @@ class Director:
             self.unseen_events = []
             proposed, usage = self._ask(state, personality)
             self.pacer.asked(state)
-            decision = check(proposed, state, self.budget)
+            decision = check(proposed, state, self.budget, host_request=self.request is not None)
+            self.request_news = self._request_news(request, proposed, decision)
             if self.request and decision.request_done:
                 log.info("Request done: %s", self.request["text"])
                 self.request = None
             if self.arc and decision.arc_beat_done:
                 self._advance_arc(state, decision)
-            self.recent.append({"game_time": state.get("time"), **decision.model_dump(exclude_none=True)})
+            self.recent.append({"minute": _minute(state), **decision.model_dump(exclude_none=True)})
             self._record(state, request, personality, proposed, decision, usage, time.monotonic() - started)
             return decision
 
@@ -111,7 +122,26 @@ class Director:
         """The decision as sent to the game, with the style it used (if the game asked for a style the companion
         doesn't know, the game sees the difference and says so) and the story arc's progress."""
         decision = self.decide(state)
-        return {**decision.model_dump(), "personality": self.last_personality, "arc": self._arc_summary()}
+        return {
+            **decision.model_dump(), "personality": self.last_personality, "arc": self._arc_summary(),
+            "request_news": self.request_news,
+        }
+
+    def _request_news(self, new_request: object, proposed: Decision, decision: Decision) -> str:
+        """What the host who sent the pending request should hear: when it's carried out or turned down, and
+        on the first decision after it arrives (taken on, or why it has to wait). Nothing in between, so the
+        chat isn't repeated every decision."""
+        if not self.request:
+            return ""
+        if decision.request_done:
+            if decision.action == "wait":
+                return f"can't be done: {decision.reason}"
+            return f"the director chose {decision.action}: {decision.reason}"
+        if new_request:
+            if proposed.action != decision.action:
+                return f"waiting: {proposed.action} is not possible yet ({decision.reason.split(' (')[0]})"
+            return f"waiting: {decision.reason}"
+        return ""
 
     def _handle_arc_request(self, arc_request: dict, state: dict) -> None:
         if arc_request.get("stop"):
@@ -130,8 +160,8 @@ class Director:
             "Recent decisions, oldest first:",
             json.dumps(list(self.recent), sort_keys=True),
             "",
-            "Current state:",
-            json.dumps(state, sort_keys=True),
+            "Current state (time in minutes):",
+            json.dumps({k: v for k, v in state.items() if k != "time"} | {"minute": _minute(state)}, sort_keys=True),
         ])
         system = [ARC_PROMPT] + ([f"Campaign story so far, from earlier sessions:\n{self.story}"] if self.story else [])
         answer = self.backend.structured(system, user, ARC_SCHEMA, ARC_EFFORT, ARC_TIMEOUT_SECONDS, cache=False)
@@ -197,7 +227,12 @@ class Director:
         return blocks
 
     def _message(self, state: dict) -> str:
+        view = {k: v for k, v in state.items() if k != "time"} | {"minute": _minute(state)}
+        cooling = self.budget.cooling_down()
         parts = [
+            "Actions on cooldown (minutes left); every other action is available now:",
+            ", ".join(f"{name} ({max(1, round(left / 60))})" for name, left in sorted(cooling.items())) or "none",
+            "",
             "Recent decisions, oldest first:",
             json.dumps(list(self.recent), sort_keys=True),
             "",
@@ -208,7 +243,7 @@ class Director:
             self.arc.describe(state.get("time", 0)) if self.arc else "none",
             "",
             "Current state:",
-            json.dumps(state, sort_keys=True),
+            json.dumps(view, sort_keys=True),
         ]
         return "\n".join(parts)
 

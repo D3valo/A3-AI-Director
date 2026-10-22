@@ -38,6 +38,11 @@ private _news = switch (_arc getOrDefault ["event", ""]) do {
 };
 if (_news != "") then { [format ["[Director] %1", _news]] remoteExec ["systemChat", AID_arcOwner] };
 if ((_arc getOrDefault ["event", ""]) in ["completed", "stopped"]) then { AID_arcStatus = "" };
+// News of the host's request (taken on, done, declined, or waiting on a cooldown), for whoever sent it.
+private _requestNews = _decision getOrDefault ["request_news", ""];
+if (!isNil "_requestNews" && { _requestNews isEqualType "" } && { _requestNews != "" }) then {
+    [format ["[Director] Your request: %1", _requestNews]] remoteExec ["systemChat", AID_requestOwner];
+};
 private _action = _decision getOrDefault ["action", "wait"];
 private _reason = _decision getOrDefault ["reason", ""];
 diag_log format ["[AI Director] Decision %1: %2", _action, _reason];

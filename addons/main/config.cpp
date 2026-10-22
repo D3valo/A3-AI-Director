@@ -53,6 +53,7 @@ class CfgFunctions
             class event {};
             class trackEncounter {};
             class sideName {};
+            class placeName {};
             class initChat {};
             class chatCommand {};
         };

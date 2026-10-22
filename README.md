@@ -168,13 +168,14 @@ and players whose Steam UID is in `AID_chatUIDs` can use them; replies go to the
 
 | Command | Effect |
 | --- | --- |
-| `!director <what you want>` | Ask the director for something, e.g. `!director give us a convoy to ambush` (sets `AID_request`) |
+| `!director <what you want>` | Ask the director for something, e.g. `!director give us a convoy to ambush` (sets `AID_request`). You hear back in chat what it makes of it: carried out, can't be done and why, or waiting on a cooldown |
 | `!approve` / `!deny` | Run or drop the proposed decision |
 | `!director status` | On or off, mode, interval, and whether a proposal is waiting |
 | `!director on` / `!director off` | Turn the director on or off |
 | `!director auto` / `!director propose` | Run decisions at once, or wait for `!approve` |
 | `!director style <name>` | Change the director's style for this session: a built-in or custom style, or `default` (the campaign's own). If the companion doesn't know the name, it says so and keeps the campaign's. `!director style` shows the current one |
 | `!director hq off` / `director` / `all` | HQ protection (see Rebel HQ above); `!director hq` shows it |
+| `!director note <fact>` / `notes` / `notes clear` | Standing facts the director keeps in mind this session, e.g. `!director note we have two AI squads with us` (at most 5) |
 | `!director arc <idea>` / `arc` / `arc status` / `arc stop` | Start a story arc from your idea (or the director's own), show the running one, or stop it ([Story arcs](#story-arcs)) |
 | `!director test` / `!director test full` | Run the in-game self-test against yourself ([docs/testing.md](docs/testing.md)); `full` also launches an offensive, so only on a throwaway save |
 | `!director help` | List the commands |
@@ -215,8 +216,9 @@ Each state carries what happened since the last one, so the director can learn f
 | --- | --- |
 | Outcomes of its actions | `Your spawn_patrol (occupants) against Alpha 1-1, 6 min ago: wiped out, all 5 killed, contact after 2 min`; what Antistasi actually sent for `call_support` (or that it sent nothing); no mission created for `offer_mission`; offensive launched or not; informant reached; supply crate landed; the VIP killed or got away |
 | Encounters under way | Each director encounter still alive: soldiers alive, minutes since contact |
-| Events | Kill tallies by side, players down or back up, players killed, locations taken (with their Antistasi names), big attacks starting and ending, missions starting and ending, the host approving, denying or ignoring proposals |
-| Where the players are | Each player's nearest named location, who holds it and how far, distance to the HQ, vehicle |
+| Events | Kill tallies by side (heavy fighting flagged as a battle), players down, back up, respawned, killed or died, the rebel HQ under attack, locations taken (Antistasi's names, with the map grid where two share a name), big attacks starting and ending, missions started, succeeded, failed or closed (with their titles), the host approving, denying or ignoring proposals |
+| Where the players are | Each player's nearest named location, who holds it and how far, distance to the HQ, vehicle, friendly soldiers within 1 km and AI squads commanded |
+| Cooldowns | Which actions are still cooling down and for how many minutes, so it only picks available ones |
 
 Events other than kill tallies make the director ask Claude even in a quiet spell; tallies from skipped states are
 passed on with the next one. The after-action report uses them to say what happened, not only what was sent.

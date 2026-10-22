@@ -1,31 +1,60 @@
 /*
     Brings the director's feedback up to date before a state is gathered: turns the kill tallies into events,
-    notices what changed since the last call (players downed or back up, locations changing hands, big attacks
-    starting or ending, missions starting or ending), and follows the director's encounters (contact, and an
-    event when one ends). Server only, from AID_fnc_loop.
+    notices what changed since the last call (players down, back up or respawned, the rebel HQ under attack,
+    locations changing hands, big attacks, missions with their titles and results), and follows the director's
+    encounters (contact, and an event when one ends). Server only, from AID_fnc_loop.
 */
 
-// Kill tallies since the last call.
+// Kill tallies since the last call. Heavy fighting (5 or more killed, or 3 or more rebels) is kind "battle", which
+// the companion treats as news; lighter tallies are "kills".
+private _singular = createHashMapFromArray [["rebels", "rebel"], ["occupants", "occupant"], ["invaders", "invader"], ["civilians", "civilian"]];
 {
     (_x splitString "|") params ["_victims", "_killers"];
-    ["kills", format ["The %1 killed %2 %3", _killers, _y, _victims]] call AID_fnc_event;
+    private _heavy = _y >= 5 || { _victims == "rebels" && { _y >= 3 } };
+    [["kills", "battle"] select _heavy, format ["The %1 killed %2 %3", _killers, _y,
+        [_victims, _singular getOrDefault [_victims, _victims]] select (_y == 1)]] call AID_fnc_event;
 } forEach AID_killCounts;
 AID_killCounts = createHashMap;
 
-// Players downed or back up.
-private _lifeStates = missionNamespace getVariable ["AID_lastLifeStates", createHashMap];
+// Players down, back up, or respawned (a respawn is a new unit for the same player).
+private _lastPlayers = missionNamespace getVariable ["AID_lastPlayers", createHashMap];
+private _players = createHashMap;
 {
+    private _uid = getPlayerUID _x;
     private _now = lifeState _x;
-    private _before = _lifeStates getOrDefault [getPlayerUID _x, _now];
-    if (_now == "INCAPACITATED" && { _before != "INCAPACITATED" }) then {
-        ["player", format ["%1 is down", name _x]] call AID_fnc_event;
+    (_lastPlayers getOrDefault [_uid, [_x, _now]]) params ["_unitBefore", "_before"];
+    private _respawned = _unitBefore isNotEqualTo _x;
+    switch (true) do {
+        case (_respawned): {
+            private _where = ["", " at the HQ"] select ("Synd_HQ" in allMapMarkers && { _x distance2D markerPos "Synd_HQ" < AID_hqRadius });
+            ["player", format ["%1 respawned%2", name _x, _where]] call AID_fnc_event;
+        };
+        case (_now == "INCAPACITATED" && { _before != "INCAPACITATED" }): {
+            ["player", format ["%1 is down", name _x]] call AID_fnc_event;
+        };
+        case (_before == "INCAPACITATED" && { _now in ["HEALTHY", "INJURED"] }): {
+            ["player", format ["%1 is back up", name _x]] call AID_fnc_event;
+        };
     };
-    if (_before == "INCAPACITATED" && { _now in ["HEALTHY", "INJURED"] }) then {
-        ["player", format ["%1 is back up", name _x]] call AID_fnc_event;
-    };
-    _lifeStates set [getPlayerUID _x, _now];
+    _players set [_uid, [_x, _now]];
 } forEach allPlayers;
-AID_lastLifeStates = _lifeStates;
+AID_lastPlayers = _players;
+
+// The rebel HQ under attack: 4 or more hostile soldiers within AID_hqRadius, and when that ends.
+if ("Synd_HQ" in allMapMarkers) then {
+    private _rebels = missionNamespace getVariable ["teamPlayer", independent];
+    private _hostile = { alive _x && { [_rebels, side group _x] call BIS_fnc_sideIsEnemy } && { side group _x != civilian } }
+        count (markerPos "Synd_HQ" nearEntities ["CAManBase", AID_hqRadius]);
+    private _attacked = missionNamespace getVariable ["AID_hqAttacked", false];
+    if (_hostile >= 4 && { !_attacked }) then {
+        ["attack", format ["The rebel HQ is under attack: %1 enemies within %2 m", _hostile, AID_hqRadius]] call AID_fnc_event;
+        AID_hqAttacked = true;
+    };
+    if (_hostile == 0 && { _attacked }) then {
+        ["attack", "No enemies are left at the rebel HQ"] call AID_fnc_event;
+        AID_hqAttacked = false;
+    };
+};
 
 // Antistasi: locations changing hands, big attacks, missions.
 if (!isNil "markersX" && { !isNil "sidesX" }) then {
@@ -35,8 +64,7 @@ if (!isNil "markersX" && { !isNil "sidesX" }) then {
     {
         private _was = _before getOrDefault [_x, _y];
         if (_was != _y && { _y != "" }) then {
-            private _name = [_x, [_x] call A3A_fnc_localizar] select (!isNil "A3A_fnc_localizar");
-            ["location", format ["%1 was taken by the %2 (from the %3)", _name, _y, _was]] call AID_fnc_event;
+            ["location", format ["%1 was taken by the %2 (from the %3)", [_x] call AID_fnc_placeName, _y, _was]] call AID_fnc_event;
         };
     } forEach _owners;
     AID_lastOwners = _owners;
@@ -47,10 +75,30 @@ if (!isNil "markersX" && { !isNil "sidesX" }) then {
     if (!_attack && { _attackBefore }) then { ["attack", "The major enemy attack is over"] call AID_fnc_event };
     AID_lastBigAttack = _attack;
 
-    private _tasks = +(missionNamespace getVariable ["A3A_activeTasks", []]);
+    // Missions by task: [id, type, state, created]; the state moves to SUCCEEDED or FAILED before deletion.
+    private _title = {
+        params ["_id", "_type"];
+        private _description = _id call BIS_fnc_taskDescription;
+        private _text = (_description param [1, [""]]) param [0, ""];
+        [format ["%1 (%2)", _text, _type], _type] select (_text == "")
+    };
+    private _tasks = createHashMap;
+    { _tasks set [_x select 0, [_x select 1, _x select 2]] } forEach (missionNamespace getVariable ["A3A_tasksData", []]);
     private _tasksBefore = missionNamespace getVariable ["AID_lastTasks", _tasks];
-    { ["mission", format ["Mission started: %1", _x]] call AID_fnc_event } forEach (_tasks - _tasksBefore);
-    { ["mission", format ["Mission ended: %1", _x]] call AID_fnc_event } forEach (_tasksBefore - _tasks);
+    {
+        _y params ["_type", "_state"];
+        private _old = _tasksBefore getOrDefault [_x, []];
+        if (_old isEqualTo []) then {
+            ["mission", format ["Mission started: %1", [_x, _type] call _title]] call AID_fnc_event;
+        } else {
+            if (_state != (_old select 1) && { _state in ["SUCCEEDED", "FAILED"] }) then {
+                ["mission", format ["Mission %1: %2", toLower _state, [_x, _type] call _title]] call AID_fnc_event;
+            };
+        };
+    } forEach _tasks;
+    {
+        if !(_x in _tasks) then { ["mission", format ["Mission closed: %1", _y select 0]] call AID_fnc_event };
+    } forEach _tasksBefore;
     AID_lastTasks = _tasks;
 };
 

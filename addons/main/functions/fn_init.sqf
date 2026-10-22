@@ -48,6 +48,8 @@ AID_pending = nil;
 AID_arcRequest = [];
 AID_arcStatus = "";  // the running arc, as last reported by the companion
 AID_arcOwner = 2;    // who asked for it: arc news goes to them only
+AID_requestOwner = 2;  // who sent the pending request: news of it goes to them
+AID_notes = [];        // standing facts from the host (!director note), at most 5
 AID_spawnedGroups = [];
 
 addMissionEventHandler ["ExtensionCallback", { _this call AID_fnc_onCallback }];

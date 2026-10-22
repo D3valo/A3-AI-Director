@@ -11,6 +11,7 @@
         !director arc [idea | status | stop]  plan a story arc from the idea (or the director's own), show the
                                     running one, or stop it
         !director hq [off | director | all]   protection of the rebel HQ (see AID_fnc_init)
+        !director note <fact> | notes | notes clear   standing facts the director keeps in mind this session
         !approve                    run the proposed decision
         !deny                       drop the proposed decision
 
@@ -67,6 +68,17 @@ switch (_command) do {
                 };
             };
         };
+        if ((toLower (_words param [1, ""])) == "note") exitWith {
+            private _fact = (_words select [2]) joinString " ";
+            if (_fact == "") exitWith { "Usage: !director note <a fact the director should keep in mind>" call _reply };
+            AID_notes pushBack (_fact select [0, 200]);
+            if (count AID_notes > 5) then { AID_notes deleteAt 0 };
+            format ["Noted (%1 of at most 5): %2", count AID_notes, _fact] call _reply;
+        };
+        if ((toLower (_words param [1, ""])) == "notes") exitWith {
+            if ((toLower (_words param [2, ""])) == "clear") exitWith { AID_notes = []; "Notes cleared." call _reply };
+            (["No notes.", format ["Notes: %1", AID_notes joinString " | "]] select (AID_notes isNotEqualTo [])) call _reply;
+        };
         if ((toLower (_words param [1, ""])) == "hq") exitWith {
             private _choice = toLower (_words param [2, ""]);
             private _meaning = createHashMapFromArray [
@@ -95,7 +107,7 @@ switch (_command) do {
         switch (toLower _rest) do {
             case "";
             case "help": {
-                "!director <what you want> | status | on | off | auto | propose | style <name> | hq <off/director/all> | arc [idea/status/stop] | test [full]. !approve / !deny answer a proposal." call _reply;
+                "!director <what you want> | status | on | off | auto | propose | style <name> | hq <off/director/all> | arc [idea/status/stop] | note <fact> | notes [clear] | test [full]. !approve / !deny answer a proposal." call _reply;
             };
             case "status": {
                 format [
@@ -106,11 +118,16 @@ switch (_command) do {
             };
             case "on": { AID_enabled = true; "On." call _reply };
             case "off": { AID_enabled = false; AID_pending = nil; "Off." call _reply };
-            case "auto": { AID_mode = "auto"; "Decisions now run at once." call _reply };
+            case "auto": {
+                AID_mode = "auto";
+                (["Decisions now run at once.", "Decisions now run at once. One proposal is still waiting: !approve or !deny it."]
+                    select !isNil "AID_pending") call _reply;
+            };
             case "propose": { AID_mode = "propose"; "Decisions now wait for !approve." call _reply };
             default {
                 AID_request = _rest;
-                format ["Request sent: %1", _rest] call _reply;
+                AID_requestOwner = _owner;
+                format ["Request sent: %1. You'll hear here what the director makes of it.", _rest] call _reply;
             };
         };
     };

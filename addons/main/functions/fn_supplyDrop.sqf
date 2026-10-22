@@ -1,7 +1,8 @@
 /*
     Sympathisers parachute a captured enemy supply crate 100-200 m from the named player: the side's own ammo box,
     filled by Antistasi's loot crate fill (unlock-aware), loadable into vehicles, marked on the map for 10 minutes
-    and with green smoke when it lands. Antistasi only; scheduled.
+    and marked with smoke (and a chemlight at night) by Antistasi's airdrop when it lands. Antistasi only;
+    scheduled.
 
     Arguments:
     0: Player name <STRING>
@@ -21,7 +22,8 @@ for "_i" from 1 to 20 do {
 };
 if (_pos isEqualTo []) exitWith { diag_log "[AI Director] supply_drop: only water nearby" };
 
-private _crate = [_faction get "ammobox", _pos, 150] call SCRT_fnc_common_airdropCargo;
+// The airdrop starts the crate where it's told (its height argument is unused), so start it 150 m up.
+private _crate = [_faction get "ammobox", _pos vectorAdd [0, 0, 150]] call SCRT_fnc_common_airdropCargo;
 if (isNull _crate) exitWith { diag_log "[AI Director] supply_drop: crate could not be dropped" };
 [_crate, teamPlayer] call A3A_fnc_AIVEHinit;
 [_crate] call A3A_Logistics_fnc_addLoadAction;
@@ -31,13 +33,12 @@ private _marker = createMarker [format ["AID_drop_%1", diag_tickTime], _pos];
 _marker setMarkerTypeLocal "mil_pickup";
 _marker setMarkerColorLocal "ColorGUER";
 _marker setMarkerText "Supply drop";
-["Sympathisers are dropping a supply crate nearby: marked on the map, green smoke when it lands."]
+["Sympathisers are dropping a supply crate nearby by parachute: marked on the map, smoke when it lands."]
     remoteExec ["systemChat", 0];
 diag_log format ["[AI Director] Supply drop near %1 at %2", _playerName, _pos];
 
 waitUntil { sleep 2; isNull _crate || { (getPosATL _crate select 2) < 2 } };
 if (!isNull _crate) then {
-    createVehicle ["SmokeShellGreen", getPosATL _crate, [], 0, "CAN_COLLIDE"];
     _marker setMarkerPos getPosATL _crate;
     ["outcome", format ["Your supply_drop landed %1 m from %2", round (_crate distance2D _target), _playerName]]
         call AID_fnc_event;

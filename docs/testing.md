@@ -37,7 +37,8 @@ Use a throwaway Antistasi save: the test spends and grants real resources and st
    patrol from the occupiers' templates, the soldier cap, intel markers, the weather, an informant walking to you,
    and in Antistasi a small donation, a new mission, a support call, a vehicle patrol, a roadblock, a sniper team, a
    recon helicopter, a supply drop and an enemy officer. The test's soldiers and vehicles are deleted afterwards; the
-   informant, crate and markers stay. WARN means Antistasi (or the map) gave it nothing to work with: no suitable
+   informant, crate and markers stay, and the director is not told about the test's encounters. If you are at the
+   protected HQ, the hostile tests are skipped with a WARN: move away from the HQ to test them. WARN means Antistasi (or the map) gave it nothing to work with: no suitable
    mission site, no affordable support, no road ahead, no helicopters in the faction. That is normal; FAIL means
    something is broken. Expect a minute or two.
 5. Play for a while, then Ctrl+C in the companion window and let it write the report.

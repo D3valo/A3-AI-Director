@@ -1,12 +1,15 @@
 /*
     Sends the game state to the companion every AID_interval seconds while the director is enabled and
-    players are connected, and straight away when the host sets AID_request or AID_arcRequest. The decision arrives later
+    players are connected, and straight away when the host sets AID_request or AID_arcRequest. In Antistasi it
+    waits until the server has finished setting up (serverInitDone), so nothing is decided over the setup screen
+    and the starting area isn't reported as captured. The decision arrives later
     through the ExtensionCallback handler.
 */
 private _next = time + AID_interval;
 while { true } do {
     waitUntil { sleep 1; time >= _next || { AID_request != "" } || { AID_arcRequest isNotEqualTo [] } };
-    if (AID_enabled && {allPlayers isNotEqualTo []}) then {
+    private _ready = isNil "A3A_fnc_initServer" || { !isNil "serverInitDone" };
+    if (AID_enabled && { _ready } && { allPlayers isNotEqualTo [] }) then {
         private _request = AID_request;
         private _arcRequest = AID_arcRequest;
         [] call AID_fnc_feedback;

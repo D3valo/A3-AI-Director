@@ -9,8 +9,9 @@
     0: New request from the host, sent once, or "" <STRING>
     1: New story arc request, sent once: ["start", idea] or ["stop", ""], or [] <ARRAY>
     2: Events to report (see AID_fnc_initFeedback) <ARRAY>
+    3: From the self-test: the companion always asks Claude <BOOL>
 */
-params [["_request", "", [""]], ["_arcRequest", [], [[]]], ["_events", [], [[]]]];
+params [["_request", "", [""]], ["_arcRequest", [], [[]]], ["_events", [], [[]]], ["_selfTest", false, [false]]];
 
 private _hq = ["", "Synd_HQ"] select ("Synd_HQ" in allMapMarkers);
 private _places = if (isNil "markersX" || { isNil "sidesX" }) then { [] } else { markersX + citiesX - ["Synd_HQ"] };
@@ -29,14 +30,19 @@ private _players = (allPlayers - entities "HeadlessClient_F") apply {
         ["at_hq", _hq != "" && { _player distance2D markerPos _hq < AID_hqRadius }],
         ["nearby_enemies_1km", {
             alive _x && { [side group _player, side group _x] call BIS_fnc_sideIsEnemy }
-        } count (_player nearEntities ["CAManBase", 1000])]
+        } count (_player nearEntities ["CAManBase", 1000])],
+        // Friendly soldiers around them (garrisons, recruits, AI squads), so a player in a big fight isn't "alone".
+        ["nearby_friendlies_1km", {
+            alive _x && { _x != _player } && { side group _x == side group _player }
+        } count (_player nearEntities ["CAManBase", 1000])],
+        ["squads_commanded", count hcAllGroups _player]
     ];
     if (_hq != "") then { _info set ["distance_to_hq", round (_player distance2D markerPos _hq)] };
     // Where they are in Antistasi's world: the nearest named location and who holds it.
     if (_places isNotEqualTo []) then {
         private _nearest = [_places, _player] call BIS_fnc_nearestPosition;
         _info set ["near", createHashMapFromArray [
-            ["place", [_nearest] call A3A_fnc_localizar],
+            ["place", [_nearest] call AID_fnc_placeName],
             ["held_by", [sidesX getVariable [_nearest, sideUnknown]] call AID_fnc_sideName],
             ["distance", round (_player distance2D markerPos _nearest)]
         ]];
@@ -95,8 +101,11 @@ private _state = createHashMapFromArray [
         ["units_max", AID_maxDirectorUnits],
         ["personality", AID_personality],
         ["protect_hq", AID_protectHQ]
-    ]]
+    ]],
+    // Standing facts from the host (!director note).
+    ["host_notes", AID_notes]
 ];
+if (_selfTest) then { _state set ["self_test", true] };
 if (_request != "") then { _state set ["request", _request] };
 if (_arcRequest isNotEqualTo []) then {
     _arcRequest params ["_kind", "_idea"];

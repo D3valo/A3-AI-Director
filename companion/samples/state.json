@@ -47,7 +47,9 @@
         "place": "Outpost near Kavala",
         "held_by": "occupants",
         "distance": 650
-      }
+      },
+      "nearby_friendlies_1km": 14,
+      "squads_commanded": 2
     },
     {
       "name": "Alpha 1-2",
@@ -70,7 +72,9 @@
         "place": "Outpost near Kavala",
         "held_by": "occupants",
         "distance": 650
-      }
+      },
+      "nearby_friendlies_1km": 14,
+      "squads_commanded": 2
     }
   ],
   "events": [
@@ -96,5 +100,6 @@
     "units_max": 24,
     "personality": "",
     "protect_hq": "director"
-  }
+  },
+  "host_notes": []
 }

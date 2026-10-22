@@ -136,6 +136,8 @@ DECISION_SCHEMA = {
 
 MAX_MESSAGE_CHARS = 200
 MAX_REQUEST_CHARS = 300
+# Actions that also start another's cooldown: the informant's intel marks the same enemies reveal_enemies does.
+SHARED_COOLDOWNS: dict[str, tuple[str, ...]] = {"informant": ("reveal_enemies",)}
 
 
 @dataclass
@@ -151,12 +153,18 @@ class Budget:
         return 0.0 if last is None else max(0.0, last + cooldown - self.clock())
 
     def spend(self, action: str) -> None:
-        self.last_used[action] = self.clock()
+        for name in (action, *SHARED_COOLDOWNS.get(action, ())):
+            self.last_used[name] = self.clock()
+
+    def cooling_down(self) -> dict[str, float]:
+        """Actions still on cooldown, with the seconds left."""
+        return {name: left for name in COOLDOWN_SECONDS if (left := self.remaining(name)) > 0}
 
 
-def check(decision: Decision, state: dict, budget: Budget) -> Decision:
-    """Returns the decision if it may run, otherwise a `wait` that records why it was dropped."""
-    problem = _problem(decision, state, budget)
+def check(decision: Decision, state: dict, budget: Budget, host_request: bool = False) -> Decision:
+    """Returns the decision if it may run, otherwise a `wait` that records why it was dropped. With a host request
+    pending, an offensive may push its side into debt."""
+    problem = _problem(decision, state, budget, host_request)
     if problem:
         return Decision.wait(f"rejected {decision.action}: {problem} (Claude's reason: {decision.reason})")
     if decision.action != "wait":
@@ -164,7 +172,7 @@ def check(decision: Decision, state: dict, budget: Budget) -> Decision:
     return decision
 
 
-def _problem(decision: Decision, state: dict, budget: Budget) -> str | None:
+def _problem(decision: Decision, state: dict, budget: Budget, host_request: bool) -> str | None:
     spec = ACTIONS[decision.action]
     antistasi = state.get("antistasi", {})
     if spec.antistasi and antistasi.get("war_level", -1) < 0:
@@ -186,7 +194,7 @@ def _problem(decision: Decision, state: dict, budget: Budget) -> str | None:
             return f"{decision.target_player} is at the protected rebel HQ"
 
     director = state.get("director", {})
-    soldiers =PATROL_SIZE[decision.strength] if decision.action == "spawn_patrol" else spec.soldiers
+    soldiers = PATROL_SIZE[decision.strength] if decision.action == "spawn_patrol" else spec.soldiers
     if soldiers and director.get("units_alive", 0) + soldiers > director.get("units_max", float("inf")):
         return f"too many director soldiers alive ({director['units_alive']} of {director['units_max']})"
     match decision.action:
@@ -196,7 +204,7 @@ def _problem(decision: Decision, state: dict, budget: Budget) -> str | None:
             return f"a {decision.mission_type} mission is already active"
         case "launch_offensive" if antistasi.get("big_attack_in_progress"):
             return "a big attack is already in progress"
-        case "launch_offensive" if (
+        case "launch_offensive" if not host_request and (
             antistasi.get(f"{decision.enemy or 'occupants'}_attack_resources", 0) < OFFENSIVE_MIN_ATTACK_RESOURCES
         ):
             return f"the {decision.enemy or 'occupants'} can't afford an offensive"

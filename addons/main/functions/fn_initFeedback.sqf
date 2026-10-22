@@ -19,8 +19,12 @@ addMissionEventHandler ["EntityKilled", {
     if !(_victim isKindOf "CAManBase") exitWith {};
     private _shooter = [_killer, _instigator] select !isNull _instigator;
     if (isPlayer _victim) then {
-        private _by = ["", format [" by the %1", [side group _shooter] call AID_fnc_sideName]] select (!isNull _shooter && { _shooter != _victim });
-        ["player", format ["%1 was killed%2", name _victim, _by]] call AID_fnc_event;
+        private _how = if (isNull _shooter || { _shooter == _victim }) then {
+            "died (bled out, fell or crashed; no one to credit)"
+        } else {
+            format ["was killed by the %1", [side group _shooter] call AID_fnc_sideName]
+        };
+        ["player", format ["%1 %2", name _victim, _how]] call AID_fnc_event;
     };
     if (isNull _shooter || { _shooter == _victim }) exitWith {};
     private _victims = [_victim getVariable ["originalSide", side group _victim]] call AID_fnc_sideName;

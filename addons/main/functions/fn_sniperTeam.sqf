@@ -15,16 +15,19 @@ if (isNull _target) exitWith {};
 if (isNil "_faction") exitWith { diag_log "[AI Director] sniper_team: needs Antistasi" };
 if !([2, "sniper_team"] call AID_fnc_capAllows) exitWith {};
 
-// The highest of 40 spots that can see the player; failing that, the highest spot.
+// The highest of 80 spots that can see the player; failing that (the player may be among buildings), one that
+// overlooks the ground around them; failing that, the highest spot.
 private _targetEye = eyePos _target;
+private _around = [0, 90, 180, 270] apply { (AGLToASL (_target getPos [40, _x])) vectorAdd [0, 0, 1.5] };
 private _best = [];
 private _bestScore = -1e9;
-for "_i" from 1 to 40 do {
+for "_i" from 1 to 80 do {
     private _candidate = _target getPos [400 + random 400, random 360];
     if (surfaceIsWater _candidate) then { continue };
-    private _height = getTerrainHeightASL _candidate;
-    private _sees = ([objNull, "VIEW"] checkVisibility [(AGLToASL _candidate) vectorAdd [0, 0, 0.6], _targetEye]) > 0.3;
-    private _score = _height + ([0, 1000] select _sees);
+    private _eye = (AGLToASL _candidate) vectorAdd [0, 0, 0.6];
+    private _sees = ([objNull, "VIEW"] checkVisibility [_eye, _targetEye]) > 0.3;
+    private _overlooks = _around findIf { ([objNull, "VIEW"] checkVisibility [_eye, _x]) > 0.3 } >= 0;
+    private _score = getTerrainHeightASL _candidate + ([0, 1000] select _overlooks) + ([0, 2000] select _sees);
     if (_score > _bestScore) then { _best = _candidate; _bestScore = _score };
 };
 if (_best isEqualTo []) exitWith { diag_log "[AI Director] sniper_team: no position found" };
@@ -41,4 +44,5 @@ _group reveal [_target, 1.5];
 ["sniper_team", _side, _playerName, [_group]] call AID_fnc_trackEncounter;
 
 diag_log format ["[AI Director] Sniper team at %1, %2 m from %3, %4",
-    _best, round (_best distance2D _target), _playerName, ["no line of sight", "line of sight"] select (_bestScore >= 1000)];
+    _best, round (_best distance2D _target), _playerName,
+    ["no line of sight", "overlooking the ground around them", "line of sight"] select (floor (_bestScore / 1000) min 2)];
