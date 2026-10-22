@@ -47,7 +47,7 @@ addons/main (SQF)                   companion/director
 | --- | --- |
 | `addons/main` | SQF: state gathering, the callback handler, the actions, the off switch |
 | `extension` | Rust `cdylib` built on [arma-rs](https://github.com/BrettMayson/arma-rs); becomes `ai_director_x64.dll` |
-| `companion` | Python companion: `director/` package, `samples/state.json`, `tests/` |
+| `companion` | Python companion: `director/` package, `samples/state.json`, `tests/`; `campaigns/` (not in git) holds each campaign's logs, reports and story |
 | `tools/build.ps1` | Tests and builds the extension, copies the DLL into the mod root, runs `hemtt build` |
 
 ## Requirements
@@ -85,14 +85,28 @@ cd companion; .venv\Scripts\python -m unittest discover -s tests -t .
 
    ```powershell
    cd companion
-   .venv\Scripts\python -m director serve                  # --backend claude-code|api|offline, --effort low|medium|high
+   .venv\Scripts\python -m director --campaign infinizo serve   # --backend claude-code|api|offline, --effort low|medium|high
    ```
 
    One decision for a saved state, without the game: `.venv\Scripts\python -m director decide samples\state.json`.
 2. Start Arma with the mod: `hemtt launch` (CBA only) or `hemtt launch antistasi`, with BattlEye off. On a
    dedicated server, load the built mod with `-serverMod=`; clients don't need it.
 3. Host a mission. The server's `.rpt` shows `[AI Director] Extension 0.1.0 loaded.` and then one line per
-   decision. Decisions with their reasons and token usage are also in `companion\logs\decisions-*.jsonl`.
+   decision.
+4. After the session, press Ctrl+C in the companion window and let it finish: Claude writes the session's
+   after-action report and updates the campaign's story so far, which the director reads next session. If the
+   window was closed instead, run `.venv\Scripts\python -m director --campaign infinizo report` afterwards.
+
+## Campaigns
+
+Each campaign (`--campaign <name>`, default `default`) keeps its own memory in `companion\campaigns\<name>\`, so
+separate games don't mix:
+
+| Path | What |
+| --- | --- |
+| `logs\decisions-*.jsonl` | Every decision of a session with the state, Claude's reason and token usage |
+| `reports\decisions-*.md` | After-action report for each session, written for the players |
+| `story.md` | The story so far, rewritten after each session; the director reads it as background for continuity. Edit it freely, or delete it to start the campaign's story afresh |
 
 ## Chat commands
 

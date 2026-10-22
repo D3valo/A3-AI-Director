@@ -3,6 +3,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from director.backends import Answer
 from director.catalogue import Decision
 from director.decider import Director
 
@@ -10,17 +11,20 @@ STATE = {"time": 100, "players": [{"name": "Alpha 1-1"}]}
 
 
 class ScriptedBackend:
-    """Returns the queued decisions in order and records the messages it was asked."""
+    """Returns the queued answers in order and records the messages it was asked."""
 
     name = "scripted"
 
-    def __init__(self, *decisions: Decision) -> None:
-        self.decisions = list(decisions)
+    def __init__(self, *answers: Decision | dict | None) -> None:
+        self.answers = list(answers)
         self.messages: list[str] = []
 
-    def ask(self, user: str) -> tuple[Decision, dict | None]:
+    def structured(self, system: str, user: str, schema: dict, effort: str, timeout: float) -> Answer:
         self.messages.append(user)
-        return self.decisions.pop(0), None
+        answer = self.answers.pop(0)
+        if answer is None:
+            return Answer(None, error="scripted failure")
+        return Answer(answer.model_dump() if isinstance(answer, Decision) else answer)
 
 
 def spawn(request_done: bool) -> Decision:
@@ -29,13 +33,19 @@ def spawn(request_done: bool) -> Decision:
     })
 
 
-def pending_request(message: str) -> object:
+def section(message: str, heading: str) -> str | None:
     lines = message.splitlines()
-    value = lines[lines.index("Pending player request:") + 1]
+    if heading not in lines:
+        return None
+    return lines[lines.index(heading) + 1]
+
+
+def pending_request(message: str) -> object:
+    value = section(message, "Pending player request:")
     return None if value == "none" else json.loads(value)
 
 
-class RequestTests(unittest.TestCase):
+class DirectorTests(unittest.TestCase):
     def setUp(self) -> None:
         self.log_dir = Path(tempfile.mkdtemp())
 
@@ -70,6 +80,21 @@ class RequestTests(unittest.TestCase):
         director.decide({**STATE, "request": "first"})
         director.decide({**STATE, "request": "second"})
         self.assertEqual(pending_request(backend.messages[1])["text"], "second")
+
+    def test_failed_or_malformed_answer_waits(self) -> None:
+        director = Director(ScriptedBackend(None, {"action": "nuke"}), self.log_dir)
+        self.assertEqual(director.decide(STATE).action, "wait")
+        self.assertEqual(director.decide(STATE).action, "wait")
+
+    def test_story_in_message(self) -> None:
+        backend = ScriptedBackend(Decision.wait("a"))
+        Director(backend, self.log_dir, story="The cell hit a convoy at Kavala.").decide(STATE)
+        self.assertEqual(section(backend.messages[0], "Campaign story so far:"), "The cell hit a convoy at Kavala.")
+
+    def test_no_story_section_without_story(self) -> None:
+        backend = ScriptedBackend(Decision.wait("a"))
+        Director(backend, self.log_dir).decide(STATE)
+        self.assertIsNone(section(backend.messages[0], "Campaign story so far:"))
 
 
 if __name__ == "__main__":

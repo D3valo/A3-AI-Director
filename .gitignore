@@ -6,6 +6,6 @@ releases/
 ai_director_x64.dll
 extension/target/
 companion/.venv/
-companion/logs/
+companion/campaigns/
 __pycache__/
 .env

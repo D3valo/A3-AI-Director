@@ -10,17 +10,24 @@ from collections import deque
 from datetime import datetime, timezone
 from pathlib import Path
 
+from pydantic import ValidationError
+
 from .backends import Backend
-from .catalogue import MAX_REQUEST_CHARS, Budget, Decision, check
+from .catalogue import DECISION_SCHEMA, MAX_REQUEST_CHARS, Budget, Decision, check
+from .prompt import SYSTEM_PROMPT
 
 log = logging.getLogger(__name__)
 
 RECENT_DECISIONS = 5
+DECISION_TIMEOUT_SECONDS = 120
 
 
 class Director:
-    def __init__(self, backend: Backend, log_dir: Path) -> None:
+    def __init__(self, backend: Backend, log_dir: Path, effort: str = "low", story: str | None = None) -> None:
         self.backend = backend
+        self.effort = effort
+        # The campaign's story so far, read once per session.
+        self.story = story
         self.budget = Budget()
         self.recent: deque[dict] = deque(maxlen=RECENT_DECISIONS)
         # The host's latest request, kept until a decision carries it out or declines it.
@@ -39,7 +46,7 @@ class Director:
                 self.request = {"text": request.strip()[:MAX_REQUEST_CHARS], "since_game_time": state.get("time")}
                 log.info("Request from the host: %s", self.request["text"])
 
-            proposed, usage = self.backend.ask(self._message(state))
+            proposed, usage = self._ask(state)
             decision = check(proposed, state, self.budget)
             if self.request and decision.request_done:
                 log.info("Request done: %s", self.request["text"])
@@ -48,8 +55,23 @@ class Director:
             self._record(state, request, proposed, decision, usage, time.monotonic() - started)
             return decision
 
+    def _ask(self, state: dict) -> tuple[Decision, dict | None]:
+        answer = self.backend.structured(
+            SYSTEM_PROMPT, self._message(state), DECISION_SCHEMA, self.effort, DECISION_TIMEOUT_SECONDS
+        )
+        if answer.data is None:
+            return Decision.wait(answer.error or "no answer"), answer.usage
+        try:
+            return Decision.model_validate(answer.data), answer.usage
+        except ValidationError as e:
+            log.error("Decision does not match the schema: %s", e)
+            return Decision.wait("malformed decision"), answer.usage
+
     def _message(self, state: dict) -> str:
-        parts = [
+        parts = []
+        if self.story:
+            parts += ["Campaign story so far:", self.story, ""]
+        parts += [
             "Recent decisions, oldest first:",
             json.dumps(list(self.recent), sort_keys=True),
             "",
