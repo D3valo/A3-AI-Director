@@ -1,0 +1,11 @@
+.hemttout/
+releases/
+*.biprivatekey
+*.pbo
+.hemttprivatekey
+ai_director_x64.dll
+extension/target/
+companion/.venv/
+companion/logs/
+__pycache__/
+.env

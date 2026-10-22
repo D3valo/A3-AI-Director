@@ -1,0 +1,4 @@
+{
+    "rust-analyzer.linkedProjects": ["extension/Cargo.toml"],
+    "python.defaultInterpreterPath": "${workspaceFolder}/companion/.venv/Scripts/python.exe"
+}

@@ -1,0 +1,21 @@
+[package]
+name = "ai_director"
+version = "0.1.0"
+edition = "2024"
+description = "Arma 3 extension that relays game state to the local AI Director companion and returns its decisions."
+publish = false
+
+# Arma loads <name>_x64.dll; tools/build.ps1 copies ai_director.dll to ai_director_x64.dll in the mod root.
+[lib]
+name = "ai_director"
+crate-type = ["cdylib", "lib"]
+
+[dependencies]
+arma-rs = "1.13.0"
+serde_json = "1.0.154"
+# No TLS features: the extension only ever talks to the companion on the loopback interface.
+ureq = { version = "3.5.0", default-features = false }
+
+[profile.release]
+lto = true
+strip = true

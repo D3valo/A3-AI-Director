@@ -1,0 +1,13 @@
+{
+  "time": 5400,
+  "daytime": 14.5,
+  "weather": {"overcast": 0.3, "rain": 0, "fog": 0},
+  "world": "Altis",
+  "antistasi": {"war_level": 3, "aggression_occupants": 40, "aggression_invaders": 10},
+  "players": [
+    {"name": "Alpha 1-1", "pos": [14520, 16780, 0], "damage": 0, "alive": true, "in_vehicle": false, "group_size": 4,
+     "nearby_enemies_1km": 0, "last_contact_s": 1100},
+    {"name": "Alpha 1-2", "pos": [14540, 16770, 0], "damage": 0.2, "alive": true, "in_vehicle": false, "group_size": 4,
+     "nearby_enemies_1km": 0, "last_contact_s": 1100}
+  ]
+}

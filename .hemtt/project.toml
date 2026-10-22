@@ -1,0 +1,31 @@
+name = "AI Director"
+author = "D3valo"
+prefix = "ai_director"
+mainprefix = "x"
+
+[version]
+major = 0
+minor = 1
+patch = 0
+git_hash = 0
+
+# The extension DLL is built by tools/build.ps1 and copied into the mod root.
+[files]
+include = [
+    "mod.cpp",
+    "README.md",
+    "ai_director_x64.dll",
+]
+
+# `hemtt launch` starts Arma 3 with the dev build plus CBA (Antistasi needs it; the director does not).
+[hemtt.launch.default]
+workshop = [
+    "450814997",  # CBA_A3
+]
+
+# `hemtt launch antistasi` adds Antistasi Ultimate.
+[hemtt.launch.antistasi]
+workshop = [
+    "450814997",  # CBA_A3
+    "3020755032", # Antistasi Ultimate
+]
