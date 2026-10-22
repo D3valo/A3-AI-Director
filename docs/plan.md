@@ -91,6 +91,7 @@ about the local game, not a long-running agent with a workspace.
 | Enemy side choice, HQ protection, API prompt caching, story arcs | Built; arcs planned live by Claude; not in game |
 | Outcome feedback | Tested in game (2026-10-22, about 80 minutes on the Infinizo mod list) |
 | First in-game session | Every action and the chat commands (story arcs not tried yet); full self-test 19 passed, 1 warning (no offensive affordable); 24 issues found and fixed (cooldowns shown to Claude, friendly forces, request news in chat, setup gate, supply drop height, unique place names, mission results, pacing in battles, self-test accuracy and more) |
+| Friendly forces, aggression, host resources, punishing responses | Built: send_reinforcements, allied_assault, change_aggression, armor_assault, air_attack, momentum, `!director give` and `!director aggression`; chosen sensibly by Claude in sample scenarios; not in game |
 
 ## Next
 

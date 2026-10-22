@@ -23,6 +23,11 @@ mod carries it out.
 | `informant` | A civilian walks up to a player; when reached, says the director's line and marks nearby enemies on the map | 20 min |
 | `supply_drop` | Antistasi only: a captured enemy crate with Antistasi loot parachutes in 100-200 m away, marked and with green smoke | 30 min |
 | `enemy_vip` | Antistasi only: an officer and escort patrol 0.7-1.2 km away, marked for 10 minutes; killing him pays the rebels 500 | 30 min |
+| `armor_assault` | Antistasi only, punishing: a tank (or the heaviest armour the side has) with crew and an infantry squad hunts a player from 1.2-2 km | 30 min |
+| `air_attack` | Antistasi only, punishing: an attack helicopter hunts near a player for up to 10 minutes | 30 min |
+| `change_aggression` | Antistasi only: raise or lower a side's aggression by 20 for 30 minutes; Antistasi's own attacks and supports follow it | 20 min |
+| `send_reinforcements` | Antistasi only, friendly: a rebel fireteam or squad joins a player (high command for the commander) | 20 min |
+| `allied_assault` | Antistasi only, friendly: a rebel fireteam or squad attacks an enemy-held location near a player (named, or the nearest) | 30 min |
 
 Encounters are built from the enemy side's Antistasi templates for the war level, spawned out of players' sight, set
 up with Antistasi's own unit and vehicle functions, paid for from its attack resources, and despawned by Antistasi
@@ -175,6 +180,9 @@ and players whose Steam UID is in `AID_chatUIDs` can use them; replies go to the
 | `!director auto` / `!director propose` | Run decisions at once, or wait for `!approve` |
 | `!director style <name>` | Change the director's style for this session: a built-in or custom style, or `default` (the campaign's own). If the companion doesn't know the name, it says so and keeps the campaign's. `!director style` shows the current one |
 | `!director hq off` / `director` / `all` | HQ protection (see Rebel HQ above); `!director hq` shows it |
+| `!director give rebels money <n>` / `give rebels recruits <n>` | Give the rebels money or recruits at once, no cooldown (a negative number takes away) |
+| `!director give occupants attack <n>` / `give invaders defence <n>` | Give an enemy side attack or defence resources at once, no cooldown (negative takes away) |
+| `!director aggression occupants <points> [minutes]` | Change an enemy side's aggression, e.g. `!director aggression invaders 30` or `-20` (default 30 minutes) |
 | `!director note <fact>` / `notes` / `notes clear` | Standing facts the director keeps in mind this session, e.g. `!director note we have two AI squads with us` (at most 5) |
 | `!director arc <idea>` / `arc` / `arc status` / `arc stop` | Start a story arc from your idea (or the director's own), show the running one, or stop it ([Story arcs](#story-arcs)) |
 | `!director test` / `!director test full` | Run the in-game self-test against yourself ([docs/testing.md](docs/testing.md)); `full` also launches an offensive, so only on a throwaway save |
@@ -219,6 +227,8 @@ Each state carries what happened since the last one, so the director can learn f
 | Events | Kill tallies by side (heavy fighting flagged as a battle), players down, back up, respawned, killed or died, the rebel HQ under attack, locations taken (Antistasi's names, with the map grid where two share a name), big attacks starting and ending, missions started, succeeded, failed or closed (with their titles), the host approving, denying or ignoring proposals |
 | Where the players are | Each player's nearest named location, who holds it and how far, distance to the HQ, vehicle, friendly soldiers within 1 km and AI squads commanded |
 | Cooldowns | Which actions are still cooling down and for how many minutes, so it only picks available ones |
+| Momentum | The last 30 minutes: locations taken and lost, enemies killed, rebels lost. Strong momentum (3 or more locations, or 50 or more kills, with light losses) gets a punishing reply, `armor_assault` or `air_attack`; momentum against the players gets help |
+| Targets | For each player, the enemy-held locations within 3 km, for `allied_assault` |
 
 Events other than kill tallies make the director ask Claude even in a quiet spell; tallies from skipped states are
 passed on with the next one. The after-action report uses them to say what happened, not only what was sent.

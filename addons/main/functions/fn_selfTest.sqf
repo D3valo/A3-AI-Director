@@ -216,8 +216,42 @@ if (_antistasi && { _hostileOK }) then {
     [_playerName] spawn AID_fnc_enemyVip;
     private _vip = [{ ["AID_vip_"] call _markerExists }, 30] call _waitFor;
     ["enemy_vip", _vip, "an officer and escort are marked on the map"] call _report;
+
+    _before = count (call _newGroups);
+    [_playerName] call AID_fnc_armorAssault;
+    ["armor_assault", count (call _newGroups) > _before,
+        "armour with infantry on a road 1.2-2 km out (a WARN if the faction has no armour or there is no road)", true]
+        call _report;
+
+    _before = count (call _newGroups);
+    [_playerName] spawn AID_fnc_airAttack;
+    private _inbound = [{ count (call _newGroups) > _before }, 15] call _waitFor;
+    ["air_attack", _inbound, ["no attack helicopter (does the faction have one?)", "an attack helicopter is inbound"]
+        select _inbound, true] call _report;
 };
 AID_maxDirectorUnits = _cap;
+
+// Friendly forces and aggression. Rebel soldiers spawned here are removed at the end.
+private _rebelUnitsBefore = allUnits select { side group _x == teamPlayer };
+private _newRebels = { (allUnits select { side group _x == teamPlayer && { !isPlayer _x } }) - _rebelUnitsBefore };
+if (_antistasi) then {
+    [_playerName, "fireteam"] call AID_fnc_sendReinforcements;
+    ["send_reinforcements", (call _newRebels) isNotEqualTo [], format ["%1 rebel soldiers are joining you", count (call _newRebels)]]
+        call _report;
+
+    private _place = ["", _target] call AID_fnc_findPlace;
+    if (_place == "") then {
+        ["allied_assault", true, "no enemy-held location within 3 km to assault", true] call _report;
+    } else {
+        private _countBefore = count (call _newRebels);
+        [_playerName, "fireteam", ""] call AID_fnc_alliedAssault;
+        ["allied_assault", count (call _newRebels) > _countBefore,
+            format ["a rebel fireteam is attacking %1", [_place] call AID_fnc_placeName]] call _report;
+    };
+
+    ["occupants", 1, 1] call AID_fnc_changeAggression;
+    ["change_aggression", true, "the occupiers' aggression was nudged by 1 for 1 minute (see the .rpt)"] call _report;
+};
 
 // Clean up the test soldiers and their vehicles; everything else (informant, crate, markers) stays as the real
 // actions would leave it. The director forgets the test's encounters and outcomes first: they weren't its doing.
@@ -228,6 +262,7 @@ AID_events = AID_events select { (_x get "id") <= _eventSeqBefore || { (_x get "
     { deleteVehicle objectParent _x; deleteVehicle _x } forEach units _group;
     deleteGroup _group;
 } forEach (_testGroups + call _newGroups);
+{ deleteVehicle _x } forEach (call _newRebels);
 
 AID_enabled = _wasEnabled;
 AID_testRunning = nil;

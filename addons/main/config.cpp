@@ -54,6 +54,13 @@ class CfgFunctions
             class trackEncounter {};
             class sideName {};
             class placeName {};
+            class findPlace {};
+            class spawnRebels {};
+            class sendReinforcements {};
+            class alliedAssault {};
+            class changeAggression {};
+            class armorAssault {};
+            class airAttack {};
             class initChat {};
             class chatCommand {};
         };

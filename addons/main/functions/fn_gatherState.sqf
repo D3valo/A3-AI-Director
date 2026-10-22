@@ -46,6 +46,19 @@ private _players = (allPlayers - entities "HeadlessClient_F") apply {
             ["held_by", [sidesX getVariable [_nearest, sideUnknown]] call AID_fnc_sideName],
             ["distance", round (_player distance2D markerPos _nearest)]
         ]];
+        // Enemy-held locations within 3 km, nearest first: targets for allied_assault.
+        private _rebels = missionNamespace getVariable ["teamPlayer", independent];
+        private _targets = _places select {
+            (sidesX getVariable [_x, sideUnknown]) != _rebels && { markerPos _x distance2D _player < 3000 }
+        };
+        _targets = [_targets, [_player], { markerPos _x distance2D _input0 }, "ASCEND"] call BIS_fnc_sortBy;
+        _info set ["enemy_places", (_targets select [0, 4]) apply {
+            createHashMapFromArray [
+                ["place", [_x] call AID_fnc_placeName],
+                ["held_by", [sidesX getVariable [_x, sideUnknown]] call AID_fnc_sideName],
+                ["distance", round (_player distance2D markerPos _x)]
+            ]
+        }];
     };
     _info
 };
@@ -96,6 +109,13 @@ private _state = createHashMapFromArray [
     ["players", _players],
     ["events", _events apply { [round ((_x get "time") / 60), _x get "kind", _x get "text"] }],
     ["encounters", _encounters],
+    // How well the rebels are doing: the last 30 minutes.
+    ["momentum", call {
+        private _sum = createHashMapFromArray [["locations_taken", 0], ["locations_lost", 0], ["enemies_killed", 0], ["rebels_lost", 0]];
+        private _keys = createHashMapFromArray [["taken", "locations_taken"], ["lost", "locations_lost"], ["kills", "enemies_killed"], ["losses", "rebels_lost"]];
+        { _x params ["", "_kind", "_n"]; private _key = _keys get _kind; _sum set [_key, (_sum get _key) + _n] } forEach AID_momentum;
+        _sum
+    }],
     ["director", createHashMapFromArray [
         ["units_alive", [] call AID_fnc_directorUnits],
         ["units_max", AID_maxDirectorUnits],

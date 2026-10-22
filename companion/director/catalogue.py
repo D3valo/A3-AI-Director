@@ -19,13 +19,15 @@ from pydantic import BaseModel, ConfigDict
 Action = Literal[
     "wait", "narrate", "spawn_patrol", "call_support", "offer_mission", "launch_offensive",
     "reveal_enemies", "reward_rebels", "change_weather", "vehicle_patrol", "roadblock", "heli_recon",
-    "sniper_team", "informant", "supply_drop", "enemy_vip",
+    "sniper_team", "informant", "supply_drop", "enemy_vip", "armor_assault", "air_attack", "send_reinforcements",
+    "allied_assault", "change_aggression",
 ]
 Strength = Literal["fireteam", "squad"]
 MissionType = Literal["assassination", "conquest", "destroy", "logistics", "supplies", "rescue", "convoy"]
 Weather = Literal["clear", "overcast", "rain", "storm", "fog"]
 Reward = Literal["small", "large"]
 Enemy = Literal["occupants", "invaders"]
+Aggression = Literal["raise", "lower"]
 
 # Antistasi's task codes, as listed in the state's active_missions.
 MISSION_CODES: dict[str, str] = {
@@ -36,7 +38,7 @@ MISSION_CODES: dict[str, str] = {
 # (supply_drop also uses the enemy side, for whose crate is dropped.)
 HOSTILE_ACTIONS = frozenset({
     "spawn_patrol", "call_support", "launch_offensive", "vehicle_patrol", "roadblock", "heli_recon", "sniper_team",
-    "enemy_vip",
+    "enemy_vip", "armor_assault", "air_attack",
 })
 # Antistasi's attack costs at least this many attack resources.
 OFFENSIVE_MIN_ATTACK_RESOURCES = 400
@@ -72,6 +74,13 @@ ACTIONS: dict[str, ActionSpec] = {
     "informant": ActionSpec(("target_player",), cooldown=1200),
     "supply_drop": ActionSpec(("target_player",), cooldown=1800, antistasi=True),
     "enemy_vip": ActionSpec(("target_player",), cooldown=1800, antistasi=True, soldiers=6),
+    # Punishing responses for players who are doing very well.
+    "armor_assault": ActionSpec(("target_player",), cooldown=1800, antistasi=True, soldiers=11),
+    "air_attack": ActionSpec(("target_player",), cooldown=1800, antistasi=True, soldiers=4),
+    # Friendly forces: rebel AI from the rebels' template, a gift that costs the rebels nothing.
+    "send_reinforcements": ActionSpec(("target_player", "strength"), cooldown=1200, antistasi=True),
+    "allied_assault": ActionSpec(("target_player", "strength"), cooldown=1800, antistasi=True),
+    "change_aggression": ActionSpec(("aggression",), cooldown=1200, antistasi=True),
 }
 COOLDOWN_SECONDS: dict[str, float] = {name: spec.cooldown for name, spec in ACTIONS.items() if spec.cooldown}
 
@@ -89,6 +98,9 @@ class Decision(BaseModel):
     reward: Reward | None
     # Which enemy carries out a hostile action; null means the occupiers (or the game's AID_patrolSide).
     enemy: Enemy | None
+    # allied_assault's target, by name from a player's enemy_places; null for the nearest.
+    place: str | None
+    aggression: Aggression | None
     # True when this decision carries out the pending player request, or no action can satisfy it.
     request_done: bool
     # True when this decision delivers the active story arc's current beat (see arcs.py).
@@ -98,7 +110,7 @@ class Decision(BaseModel):
     def wait(cls, reason: str) -> Decision:
         return cls(
             action="wait", reason=reason, message=None, target_player=None, strength=None,
-            mission_type=None, weather=None, reward=None, enemy=None, request_done=False, arc_beat_done=False,
+            mission_type=None, weather=None, reward=None, enemy=None, place=None, aggression=None, request_done=False, arc_beat_done=False,
         )
 
 
@@ -124,11 +136,14 @@ DECISION_SCHEMA = {
         "weather": _nullable(_enum(Weather)),
         "reward": _nullable(_enum(Reward)),
         "enemy": _nullable(_enum(Enemy)),
+        "place": _nullable({"type": "string"}),
+        "aggression": _nullable(_enum(Aggression)),
         "request_done": {"type": "boolean"},
         "arc_beat_done": {"type": "boolean"},
     },
     "required": [
-        "action", "reason", "message", "target_player", "strength", "mission_type", "weather", "reward", "enemy",
+        "action", "reason", "message", "target_player", "strength", "mission_type", "weather", "reward", "enemy", "place",
+        "aggression",
         "request_done", "arc_beat_done",
     ],
     "additionalProperties": False,
@@ -198,6 +213,12 @@ def _problem(decision: Decision, state: dict, budget: Budget, host_request: bool
     if soldiers and director.get("units_alive", 0) + soldiers > director.get("units_max", float("inf")):
         return f"too many director soldiers alive ({director['units_alive']} of {director['units_max']})"
     match decision.action:
+        case "allied_assault" if decision.place and decision.place not in {
+            place.get("place") for p in players.values() for place in p.get("enemy_places", [])
+        }:
+            return f"unknown target place {decision.place!r} (use one from a player's enemy_places)"
+        case "change_aggression" if antistasi.get(f"{decision.enemy or 'occupants'}_defeated"):
+            return f"the {decision.enemy or 'occupants'} are defeated"
         case "narrate" | "informant" if decision.message and len(decision.message) > MAX_MESSAGE_CHARS:
             return f"message longer than {MAX_MESSAGE_CHARS} characters"
         case "offer_mission" if MISSION_CODES[decision.mission_type] in antistasi.get("active_missions", []):

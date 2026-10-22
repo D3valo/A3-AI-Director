@@ -11,10 +11,14 @@ private _singular = createHashMapFromArray [["rebels", "rebel"], ["occupants", "
 {
     (_x splitString "|") params ["_victims", "_killers"];
     private _heavy = _y >= 5 || { _victims == "rebels" && { _y >= 3 } };
+    if (_killers == "rebels" && { _victims in ["occupants", "invaders"] }) then { AID_momentum pushBack [time, "kills", _y] };
+    if (_victims == "rebels" && { _killers in ["occupants", "invaders"] }) then { AID_momentum pushBack [time, "losses", _y] };
     [["kills", "battle"] select _heavy, format ["The %1 killed %2 %3", _killers, _y,
         [_victims, _singular getOrDefault [_victims, _victims]] select (_y == 1)]] call AID_fnc_event;
 } forEach AID_killCounts;
 AID_killCounts = createHashMap;
+// Keep the last 30 minutes of momentum (see AID_fnc_gatherState).
+AID_momentum = AID_momentum select { (_x select 0) > time - 1800 };
 
 // Players down, back up, or respawned (a respawn is a new unit for the same player).
 private _lastPlayers = missionNamespace getVariable ["AID_lastPlayers", createHashMap];
@@ -65,6 +69,8 @@ if (!isNil "markersX" && { !isNil "sidesX" }) then {
         private _was = _before getOrDefault [_x, _y];
         if (_was != _y && { _y != "" }) then {
             ["location", format ["%1 was taken by the %2 (from the %3)", [_x] call AID_fnc_placeName, _y, _was]] call AID_fnc_event;
+            if (_y == "rebels") then { AID_momentum pushBack [time, "taken", 1] };
+            if (_was == "rebels") then { AID_momentum pushBack [time, "lost", 1] };
         };
     } forEach _owners;
     AID_lastOwners = _owners;

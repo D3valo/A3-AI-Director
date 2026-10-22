@@ -17,7 +17,8 @@ private _action = _decision getOrDefault ["action", "wait"];
 private _target = "target_player" call _optional;
 private _enemy = "enemy" call _optional;
 
-private _hostile = ["spawn_patrol", "call_support", "vehicle_patrol", "roadblock", "heli_recon", "sniper_team", "enemy_vip"];
+private _hostile = ["spawn_patrol", "call_support", "vehicle_patrol", "roadblock", "heli_recon", "sniper_team", "enemy_vip",
+    "armor_assault", "air_attack"];
 if (_action in _hostile && { [_target] call AID_fnc_atProtectedHQ }) exitWith {
     diag_log format ["[AI Director] %1 not run: %2 is at the protected HQ", _action, _target];
 };
@@ -41,6 +42,14 @@ switch (_action) do {
     case "informant": { [_target, ("message" call _optional) select [0, 200]] spawn AID_fnc_informant };
     case "supply_drop": { [_target, _enemy] spawn AID_fnc_supplyDrop };
     case "enemy_vip": { [_target, _enemy] spawn AID_fnc_enemyVip };
+    case "armor_assault": { [_target, _enemy] spawn AID_fnc_armorAssault };
+    case "air_attack": { [_target, _enemy] spawn AID_fnc_airAttack };
+    case "send_reinforcements": { [_target, "strength" call _optional] spawn AID_fnc_sendReinforcements };
+    case "allied_assault": { [_target, "strength" call _optional, "place" call _optional] spawn AID_fnc_alliedAssault };
+    case "change_aggression": {
+        // raise: +20 for 30 minutes; lower: -20.
+        [_enemy, [-20, 20] select (("aggression" call _optional) == "raise"), 30] call AID_fnc_changeAggression;
+    };
     default {
         diag_log format ["[AI Director] Ignoring unknown action: %1", _decision];
     };

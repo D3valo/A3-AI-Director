@@ -13,6 +13,8 @@ AID_eventSeq = 0;
 AID_encounters = [];
 AID_encounterSeq = 0;
 AID_killCounts = createHashMap;
+// [time, "taken" | "lost" | "kills" | "losses", count] for the rebels' momentum over the last 30 minutes.
+AID_momentum = [];
 
 addMissionEventHandler ["EntityKilled", {
     params ["_victim", "_killer", "_instigator"];
