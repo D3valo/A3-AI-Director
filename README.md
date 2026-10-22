@@ -2,7 +2,15 @@
 
 A server-side game master for Arma 3, driven by Claude. Every 90 seconds the server sends a summary of the game
 state to a companion program running on the same PC. The companion asks Claude for one decision (wait, narrate,
-or send a patrol), checks it against an allow-list and a cooldown budget, and the mod carries it out.
+send a patrol, or have Antistasi call in support), checks it against an allow-list and a cooldown budget, and the
+mod carries it out.
+
+| Action | Effect | Cooldown |
+| --- | --- | --- |
+| `wait` | Nothing (the usual answer) | - |
+| `narrate` | A line of atmosphere shown to all players as a hint | 120 s |
+| `spawn_patrol` | A fireteam or squad hunting a player, from out of sight 600-1000 m away | 600 s |
+| `call_support` | Antistasi only: the occupiers react as if they had spotted a player and radioed for help; Antistasi's own support logic sends a QRF, artillery, air support or nothing, paid from their defence resources | 900 s |
 
 Proof of concept. The plan and its reasoning are in the A3UE-Warhammer-40k repo, `docs/plans/ai-zeus.md`.
 
@@ -14,7 +22,7 @@ addons/main (SQF)                   companion/director
   (extension/, Rust, arma-rs)         ask Claude (structured output)  ---->  Opus 5.5 via claude -p or the API
                                       check allow-list + cooldowns    <----
   ExtensionCallback         <----     JSON decision, logged
-  dispatch: narrate / spawnPatrol
+  dispatch: narrate / spawnPatrol / callSupport
 ```
 
 - **Claude never writes code that runs in the game.** It picks one of the actions in
@@ -100,6 +108,7 @@ To force an action without asking Claude: `["<player name>", "squad"] spawn AID_
 ## Next steps
 
 - Check `AID_request` and Antistasi-template patrols in game.
-- More actions through Antistasi's support system (QRFs, mortar fire, convoys), within the same allow-list.
+- Check `call_support` in game, including what Antistasi logs when it sends nothing.
+- Tell the director what its last action led to (support sent or not, patrol contact, casualties).
 - A larger, cached system prompt (event catalogue, factions, map zones); the current one is below the minimum
   cacheable size for the `api` backend, so `cache_read_input_tokens` stays 0 there until it grows.

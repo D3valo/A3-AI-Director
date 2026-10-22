@@ -45,6 +45,13 @@ class CatalogueTests(unittest.TestCase):
         self.clock.now += COOLDOWN_SECONDS["spawn_patrol"]
         self.assertEqual(check(spawn, STATE, self.budget).action, "spawn_patrol")
 
+    def test_support_needs_antistasi_and_known_player(self) -> None:
+        support = decision("call_support", target_player="Alpha 1-1")
+        self.assertEqual(check(support, STATE, self.budget).action, "wait")
+        antistasi = {**STATE, "antistasi": {"war_level": 3}}
+        self.assertEqual(check(decision("call_support", target_player="Bravo"), antistasi, self.budget).action, "wait")
+        self.assertEqual(check(support, antistasi, self.budget).action, "call_support")
+
     def test_narrate_needs_short_message(self) -> None:
         self.assertEqual(check(decision("narrate"), STATE, self.budget).action, "wait")
         self.assertEqual(check(decision("narrate", message="x" * 201), STATE, self.budget).action, "wait")

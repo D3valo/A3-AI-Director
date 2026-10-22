@@ -30,7 +30,10 @@ private _state = createHashMapFromArray [
     ["antistasi", createHashMapFromArray [
         ["war_level", missionNamespace getVariable ["tierWar", -1]],
         ["aggression_occupants", missionNamespace getVariable ["aggressionOccupants", -1]],
-        ["aggression_invaders", missionNamespace getVariable ["aggressionInvaders", -1]]
+        ["aggression_invaders", missionNamespace getVariable ["aggressionInvaders", -1]],
+        // What the occupiers can spend on supports (call_support) and on attacks and patrols.
+        ["occupants_defence_resources", round (missionNamespace getVariable ["A3A_resourcesDefenceOcc", -1])],
+        ["occupants_attack_resources", round (missionNamespace getVariable ["A3A_resourcesAttackOcc", -1])]
     ]],
     ["players", _players]
 ];

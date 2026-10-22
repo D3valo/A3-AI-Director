@@ -23,6 +23,12 @@ target_player and strength to null. Cooldown {COOLDOWN_SECONDS["narrate"]:.0f} s
 target_player, which must be a name from the snapshot's players list. It appears 600-1000 m away out of \
 sight and moves in. In Antistasi it comes from the occupiers' own troops, matched to the war level, and \
 costs them resources. Set message to null. Cooldown {COOLDOWN_SECONDS["spawn_patrol"]:.0f} s.
+- call_support (Antistasi only): the occupiers react to target_player as if one of their units had \
+spotted them and radioed for help. Antistasi picks what to send from what they can afford and safely use \
+there: a quick reaction force by road or air, mortar or artillery fire, or air support, and the players \
+may hear the intercepted call. It can send nothing if the occupiers lack defence resources (see the \
+snapshot) or only risky options exist. The heaviest action: use it to answer the players' own escalation, \
+not as a first move. Set message and strength to null. Cooldown {COOLDOWN_SECONDS["call_support"]:.0f} s.
 
 An action still on cooldown, or with missing fields, is rejected and counts as a wait. Always explain \
 your choice in one sentence in reason; it is logged for the players to read after the session.

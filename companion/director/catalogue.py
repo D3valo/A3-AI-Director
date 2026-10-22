@@ -14,7 +14,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict
 
-Action = Literal["wait", "narrate", "spawn_patrol"]
+Action = Literal["wait", "narrate", "spawn_patrol", "call_support"]
 Strength = Literal["fireteam", "squad"]
 
 
@@ -43,7 +43,7 @@ def _nullable(schema: dict) -> dict:
 DECISION_SCHEMA = {
     "type": "object",
     "properties": {
-        "action": {"type": "string", "enum": ["wait", "narrate", "spawn_patrol"]},
+        "action": {"type": "string", "enum": ["wait", "narrate", "spawn_patrol", "call_support"]},
         "reason": {"type": "string"},
         "message": _nullable({"type": "string"}),
         "target_player": _nullable({"type": "string"}),
@@ -56,7 +56,7 @@ DECISION_SCHEMA = {
 
 MAX_MESSAGE_CHARS = 200
 MAX_REQUEST_CHARS = 300
-COOLDOWN_SECONDS: dict[str, float] = {"narrate": 120, "spawn_patrol": 600}
+COOLDOWN_SECONDS: dict[str, float] = {"narrate": 120, "spawn_patrol": 600, "call_support": 900}
 
 
 @dataclass
@@ -95,12 +95,20 @@ def _problem(decision: Decision, state: dict, budget: Budget) -> str | None:
             if len(decision.message) > MAX_MESSAGE_CHARS:
                 return f"message longer than {MAX_MESSAGE_CHARS} characters"
         case "spawn_patrol":
-            players = {p.get("name") for p in state.get("players", [])}
-            if decision.target_player not in players:
+            if not _is_player(decision.target_player, state):
                 return f"unknown target player {decision.target_player!r}"
             if decision.strength is None:
                 return "no strength"
+        case "call_support":
+            if state.get("antistasi", {}).get("war_level", -1) < 0:
+                return "support needs Antistasi"
+            if not _is_player(decision.target_player, state):
+                return f"unknown target player {decision.target_player!r}"
     remaining = budget.remaining(decision.action)
     if remaining > 0:
         return f"on cooldown for {remaining:.0f} s"
     return None
+
+
+def _is_player(name: str | None, state: dict) -> bool:
+    return name in {p.get("name") for p in state.get("players", [])}
