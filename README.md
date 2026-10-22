@@ -216,7 +216,7 @@ and earliest minutes, and an ending. For the next 20-40 minutes every decision s
 current beat, through the normal actions, cooldowns and limits; a decision that delivers a beat moves it on. Only the
 player who started it hears the arc's news (begins, complete, stopped), so the plot isn't spoiled for the others.
 `!director arc status` shows the beat; `!director arc stop` ends it; a new arc replaces the running one. The running
-arc is saved in `campaigns\<name>rc.json`, so it survives a companion restart, and the after-action report covers
+arc is saved in `campaigns\<name>\arc.json`, so it survives a companion restart, and the after-action report covers
 it. While an arc runs, the director asks Claude every time instead of skipping quiet moments.
 
 ## Prompt caching
