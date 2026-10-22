@@ -24,8 +24,9 @@ class ScriptedBackend:
 
 
 def spawn(request_done: bool) -> Decision:
-    return Decision(action="spawn_patrol", reason="asked", message=None, target_player="Alpha 1-1", strength="squad",
-                    request_done=request_done)
+    return Decision.wait("asked").model_copy(update={
+        "action": "spawn_patrol", "target_player": "Alpha 1-1", "strength": "squad", "request_done": request_done,
+    })
 
 
 def pending_request(message: str) -> object:

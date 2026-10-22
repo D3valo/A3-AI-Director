@@ -8,9 +8,17 @@ mod carries it out.
 | Action | Effect | Cooldown |
 | --- | --- | --- |
 | `wait` | Nothing (the usual answer) | - |
-| `narrate` | A line of atmosphere shown to all players as a hint | 120 s |
-| `spawn_patrol` | A fireteam or squad hunting a player, from out of sight 600-1000 m away | 600 s |
-| `call_support` | Antistasi only: the occupiers react as if they had spotted a player and radioed for help; Antistasi's own support logic sends a QRF, artillery, air support or nothing, paid from their defence resources | 900 s |
+| `narrate` | A line of atmosphere shown to all players as a hint | 2 min |
+| `spawn_patrol` | A fireteam or squad hunting a player, from out of sight 600-1000 m away | 10 min |
+| `call_support` | Antistasi only: the occupiers react as if they had spotted a player and radioed for help; Antistasi's own support logic sends a QRF, artillery, air support or nothing, paid from their defence resources | 15 min |
+| `offer_mission` | Antistasi only: a new rebel task through Antistasi's mission request (assassination, conquest, destroy, logistics, supplies, rescue, convoy); not a type already active | 20 min |
+| `launch_offensive` | Antistasi only: a major attack chosen by Antistasi (`A3A_fnc_chooseAttack`), possibly on the HQ; needs 400+ attack resources and no big attack in progress | 60 min |
+| `reveal_enemies` | Enemy groups within 1.5 km of a player marked on every map for 5 minutes | 10 min |
+| `reward_rebels` | Antistasi only: small (300 money, 1 recruit) or large (1000 money, 3 recruits) donation | 30 min |
+| `change_weather` | Clear, overcast, rain, storm or fog, over 5 minutes | 20 min |
+
+The actions are defined once in `companion/director/catalogue.py` (`ACTIONS`: fields, cooldown, Antistasi-only);
+the prompt in `prompt.py` tells Claude when each fits.
 
 Proof of concept. The plan and its reasoning are in the A3UE-Warhammer-40k repo, `docs/plans/ai-zeus.md`.
 
@@ -108,7 +116,7 @@ To force an action without asking Claude: `["<player name>", "squad"] spawn AID_
 ## Next steps
 
 - Check `AID_request` and Antistasi-template patrols in game.
-- Check `call_support` in game, including what Antistasi logs when it sends nothing.
+- Check the new actions in game (all but narrate and spawn_patrol are untested there).
 - Tell the director what its last action led to (support sent or not, patrol contact, casualties).
 - A larger, cached system prompt (event catalogue, factions, map zones); the current one is below the minimum
   cacheable size for the `api` backend, so `cache_read_input_tokens` stays 0 there until it grows.

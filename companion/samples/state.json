@@ -12,7 +12,13 @@
     "aggression_occupants": 40,
     "aggression_invaders": 10,
     "occupants_defence_resources": 900,
-    "occupants_attack_resources": 1200
+    "occupants_attack_resources": 1200,
+    "rebel_money": 2500,
+    "rebel_recruits": 12,
+    "active_missions": [
+      "CON"
+    ],
+    "big_attack_in_progress": false
   },
   "players": [
     {

@@ -3,7 +3,7 @@ import unittest
 
 from director.backends import parse_claude_code_output
 
-DECISION = {"action": "narrate", "reason": "lull", "message": "Static on the radio.", "target_player": None, "strength": None, "request_done": False}
+DECISION = {"action": "narrate", "reason": "lull", "message": "Static on the radio.", "target_player": None, "strength": None, "mission_type": None, "weather": None, "reward": None, "request_done": False}
 
 
 def output(**fields) -> str:

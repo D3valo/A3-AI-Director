@@ -26,6 +26,11 @@ class CfgFunctions
             class approve {};
             class spawnPatrol {};
             class callSupport {};
+            class offerMission {};
+            class launchOffensive {};
+            class revealEnemies {};
+            class rewardRebels {};
+            class changeWeather {};
         };
     };
 };

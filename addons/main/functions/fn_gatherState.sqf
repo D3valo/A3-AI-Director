@@ -22,6 +22,9 @@ private _players = (allPlayers - entities "HeadlessClient_F") apply {
     ]
 };
 
+// Antistasi keeps the rebels' money and recruits on its "server" object.
+private _rebels = missionNamespace getVariable ["server", objNull];
+
 private _state = createHashMapFromArray [
     ["time", round time],
     ["daytime", round (10 * dayTime) / 10],
@@ -33,7 +36,12 @@ private _state = createHashMapFromArray [
         ["aggression_invaders", missionNamespace getVariable ["aggressionInvaders", -1]],
         // What the occupiers can spend on supports (call_support) and on attacks and patrols.
         ["occupants_defence_resources", round (missionNamespace getVariable ["A3A_resourcesDefenceOcc", -1])],
-        ["occupants_attack_resources", round (missionNamespace getVariable ["A3A_resourcesAttackOcc", -1])]
+        ["occupants_attack_resources", round (missionNamespace getVariable ["A3A_resourcesAttackOcc", -1])],
+        ["rebel_money", _rebels getVariable ["resourcesFIA", -1]],
+        ["rebel_recruits", _rebels getVariable ["hr", -1]],
+        // Antistasi task codes: AS, CON, DES, LOG, SUPP, RES, CONVOY, ...
+        ["active_missions", missionNamespace getVariable ["A3A_activeTasks", []]],
+        ["big_attack_in_progress", missionNamespace getVariable ["bigAttackInProgress", false]]
     ]],
     ["players", _players]
 ];
