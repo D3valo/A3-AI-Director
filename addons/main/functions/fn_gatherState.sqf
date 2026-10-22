@@ -43,7 +43,12 @@ private _state = createHashMapFromArray [
         ["active_missions", missionNamespace getVariable ["A3A_activeTasks", []]],
         ["big_attack_in_progress", missionNamespace getVariable ["bigAttackInProgress", false]]
     ]],
-    ["players", _players]
+    ["players", _players],
+    ["director", createHashMapFromArray [
+        ["units_alive", [] call AID_fnc_directorUnits],
+        ["units_max", AID_maxDirectorUnits],
+        ["personality", AID_personality]
+    ]]
 ];
 if (_request != "") then { _state set ["request", _request] };
 toJSON _state

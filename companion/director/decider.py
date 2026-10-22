@@ -14,20 +14,33 @@ from pydantic import ValidationError
 
 from .backends import Backend
 from .catalogue import DECISION_SCHEMA, MAX_REQUEST_CHARS, Budget, Decision, check
-from .prompt import SYSTEM_PROMPT
+from .pacing import Pacer
+from .prompt import DEFAULT_PERSONALITY, PERSONALITIES, system_prompt
 
 log = logging.getLogger(__name__)
 
 RECENT_DECISIONS = 5
 DECISION_TIMEOUT_SECONDS = 120
+DEFAULT_MAX_SKIP_SECONDS = 300
 
 
 class Director:
-    def __init__(self, backend: Backend, log_dir: Path, effort: str = "low", story: str | None = None) -> None:
+    def __init__(
+        self,
+        backend: Backend,
+        log_dir: Path,
+        effort: str = "low",
+        story: str | None = None,
+        personality: str = DEFAULT_PERSONALITY,
+        max_skip: float = 0,
+    ) -> None:
         self.backend = backend
         self.effort = effort
         # The campaign's story so far, read once per session.
         self.story = story
+        # The session's style, unless the game asks for another (!director style ...).
+        self.personality = personality
+        self.pacer = Pacer(max_skip)
         self.budget = Budget()
         self.recent: deque[dict] = deque(maxlen=RECENT_DECISIONS)
         # The host's latest request, kept until a decision carries it out or declines it.
@@ -46,18 +59,33 @@ class Director:
                 self.request = {"text": request.strip()[:MAX_REQUEST_CHARS], "since_game_time": state.get("time")}
                 log.info("Request from the host: %s", self.request["text"])
 
-            proposed, usage = self._ask(state)
+            personality = self._personality(state)
+            if self.pacer.should_skip(state, has_request=self.request is not None):
+                # Not added to the recent decisions Claude sees: it didn't make this one.
+                decision = Decision.wait("skipped: nothing important changed since Claude last looked")
+                self._record(state, request, personality, None, decision, None, time.monotonic() - started)
+                return decision
+
+            proposed, usage = self._ask(state, personality)
+            self.pacer.asked(state)
             decision = check(proposed, state, self.budget)
             if self.request and decision.request_done:
                 log.info("Request done: %s", self.request["text"])
                 self.request = None
             self.recent.append({"game_time": state.get("time"), **decision.model_dump(exclude_none=True)})
-            self._record(state, request, proposed, decision, usage, time.monotonic() - started)
+            self._record(state, request, personality, proposed, decision, usage, time.monotonic() - started)
             return decision
 
-    def _ask(self, state: dict) -> tuple[Decision, dict | None]:
+    def _personality(self, state: dict) -> str:
+        chosen = state.get("director", {}).get("personality") or self.personality
+        if chosen not in PERSONALITIES:
+            log.warning("Unknown personality %r; using %s", chosen, self.personality)
+            return self.personality
+        return chosen
+
+    def _ask(self, state: dict, personality: str) -> tuple[Decision, dict | None]:
         answer = self.backend.structured(
-            SYSTEM_PROMPT, self._message(state), DECISION_SCHEMA, self.effort, DECISION_TIMEOUT_SECONDS
+            system_prompt(personality), self._message(state), DECISION_SCHEMA, self.effort, DECISION_TIMEOUT_SECONDS
         )
         if answer.data is None:
             return Decision.wait(answer.error or "no answer"), answer.usage
@@ -84,16 +112,25 @@ class Director:
         return "\n".join(parts)
 
     def _record(
-        self, state: dict, request: object, proposed: Decision, decision: Decision, usage: dict | None, seconds: float
+        self,
+        state: dict,
+        request: object,
+        personality: str,
+        proposed: Decision | None,
+        decision: Decision,
+        usage: dict | None,
+        seconds: float,
     ) -> None:
         entry = {
             "at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-            "backend": self.backend.name,
+            # "skipped" when the pacer answered without asking Claude.
+            "backend": self.backend.name if proposed else "skipped",
+            "personality": personality,
             "seconds": round(seconds, 1),
             "state": state,
             "new_request": request,
             "pending_request": self.request,
-            "proposed": proposed.model_dump(),
+            "proposed": proposed.model_dump() if proposed else None,
             "decision": decision.model_dump(),
             "usage": usage,
         }

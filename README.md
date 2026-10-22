@@ -85,7 +85,7 @@ cd companion; .venv\Scripts\python -m unittest discover -s tests -t .
 
    ```powershell
    cd companion
-   .venv\Scripts\python -m director --campaign infinizo serve   # --backend claude-code|api|offline, --effort low|medium|high
+   .venv\Scripts\python -m director --campaign infinizo serve   # options below
    ```
 
    One decision for a saved state, without the game: `.venv\Scripts\python -m director decide samples\state.json`.
@@ -96,6 +96,21 @@ cd companion; .venv\Scripts\python -m unittest discover -s tests -t .
 4. After the session, press Ctrl+C in the companion window and let it finish: Claude writes the session's
    after-action report and updates the campaign's story so far, which the director reads next session. If the
    window was closed instead, run `.venv\Scripts\python -m director --campaign infinizo report` afterwards.
+
+## Companion options
+
+Options before the command apply to all commands; `--max-skip` and `--no-report` go after `serve`.
+
+| Option | Default | Effect |
+| --- | --- | --- |
+| `--campaign <name>` | `default` | Which campaign's logs, reports and story to use |
+| `--personality <style>` | `balanced` | `balanced`, `cinematic` (atmosphere and set pieces), `merciless` (more pressure, little help) or `supportive` (small fights, more help). `!director style` overrides it in game |
+| `--backend <name>` | `claude-code` | `claude-code`, `api` or `offline` |
+| `--effort <level>` | `low` | `low`, `medium` or `high` thinking for decisions |
+| `serve --max-skip <s>` | `300` | While nothing important changes (no deaths, big damage, change in nearby enemies, movement of a few hundred metres, mission or war-level change, time of day), wait without asking Claude, for up to this many seconds. `0` asks every time. Saves usage in quiet spells and long fights |
+| `serve --no-report` | off | Don't write the report and story on Ctrl+C |
+
+Skipped decisions are logged as waits with the backend `skipped`.
 
 ## Campaigns
 
@@ -120,6 +135,7 @@ and players whose Steam UID is in `AID_chatUIDs` can use them; replies go to the
 | `!director status` | On or off, mode, interval, and whether a proposal is waiting |
 | `!director on` / `!director off` | Turn the director on or off |
 | `!director auto` / `!director propose` | Run decisions at once, or wait for `!approve` |
+| `!director style <name>` | Change the director's personality: `balanced`, `cinematic`, `merciless`, `supportive`, or `default` (the companion's `--personality`); `!director style` shows the current one |
 | `!director help` | List the commands |
 
 Players don't need the mod: the server sends the chat hook to every client, including players who join later.
@@ -130,6 +146,7 @@ Players don't need the mod: the server sends the chat hook to every client, incl
 | --- | --- |
 | `AID_enabled = false` | Off switch: stop sending states and ignore decisions |
 | `AID_chatUIDs = ["7656119..."]` | Extra players allowed to use the chat commands |
+| `AID_maxDirectorUnits = 24` | The most director-spawned soldiers alive at once; further patrols are refused (default 24) |
 | `AID_mode = "auto"` | Run decisions at once (default `"propose"`: announced in chat, wait for approval) |
 | `[] call AID_fnc_approve` | Run the proposed decision |
 | `AID_request = "send a patrol at us"` | Ask the director for something in plain words. Sent at once; the companion keeps it until a decision carries it out (cooldowns still apply) or Claude says it can't be done with the available actions |

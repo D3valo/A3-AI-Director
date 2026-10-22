@@ -76,6 +76,33 @@ pending request, set request_done to false.
 """
 
 
+PERSONALITIES: dict[str, str] = {
+    "balanced": "Balanced: follow the guidance above as written.",
+    "cinematic": (
+        "Cinematic: you are telling a story. Favour atmosphere, set pieces and slow-building tension: narrate "
+        "more often, let threats announce themselves before they arrive, and build towards climaxes rather "
+        "than wearing the players down. Spectacle over attrition."
+    ),
+    "merciless": (
+        "Merciless: the occupiers are competent and relentless. Act more often, answer every rebel success "
+        "with a reply, and keep the pressure on a strong squad; rewards and intel are rare. Still never pile "
+        "on a squad that is already broken; hard, not hopeless."
+    ),
+    "supportive": (
+        "Supportive: the players are few or still learning. Keep fights small and readable, help often with "
+        "intel, rewards and missions, and give them time to recover between fights. Pressure comes rarely, "
+        "in fireteams rather than squads."
+    ),
+}
+DEFAULT_PERSONALITY = "balanced"
+
+
+def system_prompt(personality: str) -> str:
+    """The director's system prompt with the session's style. Unknown styles fall back to the default."""
+    style = PERSONALITIES.get(personality, PERSONALITIES[DEFAULT_PERSONALITY])
+    return f"{SYSTEM_PROMPT}\nStyle for this session. {style}\n"
+
+
 REPORT_PROMPT = """\
 You keep the records of a cooperative Arma 3 campaign run by an AI game master (the director). The \
 players are insurgents fighting an occupying army (Antistasi). After each session you receive the story \

@@ -12,6 +12,9 @@
                        (looked up when each patrol spawns, as Antistasi sets it after this runs), or east.
     AID_patrolUnits  - unit classes for patrols outside Antistasi, used in order and repeated as needed.
     AID_chatUIDs     - Steam UIDs (strings) allowed to use the chat commands besides the host and admins.
+    AID_maxDirectorUnits - the most director-spawned soldiers alive at once; patrols beyond it are refused.
+    AID_personality  - the director's style: balanced, cinematic, merciless or supportive; "" uses the
+                       companion's --personality.
 */
 if (!isServer) exitWith {};
 
@@ -29,9 +32,12 @@ diag_log format ["[AI Director] Extension %1 loaded.", _version select 0];
     ["AID_interval", 90],
     ["AID_request", ""],
     ["AID_patrolUnits", ["O_Soldier_TL_F", "O_Soldier_AR_F", "O_Soldier_GL_F", "O_Soldier_LAT_F"]],
-    ["AID_chatUIDs", []]
+    ["AID_chatUIDs", []],
+    ["AID_maxDirectorUnits", 24],
+    ["AID_personality", ""]
 ];
 AID_pending = nil;
+AID_spawnedGroups = [];
 
 addMissionEventHandler ["ExtensionCallback", { _this call AID_fnc_onCallback }];
 call AID_fnc_initChat;

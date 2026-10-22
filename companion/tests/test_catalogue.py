@@ -69,6 +69,15 @@ class CatalogueTests(unittest.TestCase):
         self.assertFalse(self.allowed(decision("launch_offensive"), poor))
         self.assertTrue(self.allowed(decision("launch_offensive"), ANTISTASI))
 
+    def test_soldier_cap(self) -> None:
+        def with_alive(alive: int) -> dict:
+            return {**STATE, "director": {"units_alive": alive, "units_max": 24}}
+
+        squad = decision("spawn_patrol", target_player="Alpha 1-1", strength="squad")
+        fireteam = decision("spawn_patrol", target_player="Alpha 1-1", strength="fireteam")
+        self.assertFalse(self.allowed(squad, with_alive(17)))
+        self.assertTrue(self.allowed(fireteam, with_alive(19)))
+
     def test_cooldown(self) -> None:
         spawn = decision("spawn_patrol", target_player="Alpha 1-1", strength="fireteam")
         self.assertTrue(self.allowed(spawn))

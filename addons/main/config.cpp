@@ -25,6 +25,7 @@ class CfgFunctions
             class dispatch {};
             class approve {};
             class spawnPatrol {};
+            class directorUnits {};
             class callSupport {};
             class offerMission {};
             class launchOffensive {};

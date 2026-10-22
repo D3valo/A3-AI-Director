@@ -3,7 +3,8 @@ to every decision before it reaches the game.
 
 Each action is described once in ACTIONS: the decision fields it needs, its cooldown, and whether it
 needs Antistasi. The schema guarantees the shape; `check` enforces what a schema can't: per-action
-required fields, that the target is a real player, game-state preconditions, and the cooldowns.
+required fields, that the target is a real player, game-state preconditions (including the cap on
+director-spawned soldiers alive), and the cooldowns.
 """
 
 from __future__ import annotations
@@ -31,6 +32,8 @@ MISSION_CODES: dict[str, str] = {
 }
 # Antistasi's attack costs at least this many attack resources.
 OFFENSIVE_MIN_ATTACK_RESOURCES = 400
+# Largest patrol of each strength (Antistasi fireteams are 5, vanilla ones 4), for the soldier cap.
+PATROL_SIZE: dict[str, int] = {"fireteam": 5, "squad": 8}
 
 
 @dataclass(frozen=True)
@@ -147,7 +150,12 @@ def _problem(decision: Decision, state: dict, budget: Budget) -> str | None:
     if "target_player" in spec.fields and decision.target_player not in {p.get("name") for p in state.get("players", [])}:
         return f"unknown target player {decision.target_player!r}"
 
+    director = state.get("director", {})
     match decision.action:
+        case "spawn_patrol" if (
+            director.get("units_alive", 0) + PATROL_SIZE[decision.strength] > director.get("units_max", float("inf"))
+        ):
+            return f"too many director soldiers alive ({director['units_alive']} of {director['units_max']})"
         case "narrate" if len(decision.message) > MAX_MESSAGE_CHARS:
             return f"message longer than {MAX_MESSAGE_CHARS} characters"
         case "offer_mission" if MISSION_CODES[decision.mission_type] in antistasi.get("active_missions", []):

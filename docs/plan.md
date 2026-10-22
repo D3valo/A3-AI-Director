@@ -85,13 +85,15 @@ about the local game, not a long-running agent with a workspace.
 | Host requests (`AID_request`, `!director ...`) | Built, tested against Claude, not in game |
 | Chat commands | Built, not tested in game |
 | Campaign memory (reports, story so far) | Built, tested on a real session log |
+| Comfort: skipping unchanged states, personalities, soldier cap | Built; personalities tested against Claude, the rest by unit tests; not in game |
 
 ## Next
 
 1. **Test session** on a throwaway Antistasi save: every action, the chat commands, a session report.
 2. **Real game setup** with the group's mod list (`.hemtt\presets\infinizo.html`): load the mod as a local
-   mod on the host, BattlEye off, decide whether the host's PC or a dedicated server runs the session (the
-   companion and its Claude login must be on the same machine), and start the companion with the game.
+   mod on the host, BattlEye off, and start the companion with the game. Sessions will start on the host's own PC
+   (companion and Arma side by side); a dedicated server may follow, which needs the companion and its Claude
+   login (or an API key) on that machine.
 3. **Outcome feedback:** tell the director what its actions led to (patrol contact and losses, what support
    Antistasi sent or that it sent nothing, missions taken up or finished) and recent events (players downed,
    towns changing hands, attacks starting and ending), plus where players are in Antistasi's world (nearest
@@ -99,12 +101,14 @@ about the local game, not a long-running agent with a workspace.
 4. **More encounters:** vehicle patrols, roadblocks, helicopter recon, sniper teams, informants and deserters,
    supply drops, an enemy VIP.
 5. **Story arcs:** short multi-step plots planned across several decisions, building on 3 and the campaign story.
-6. **Comfort and cost:** skip Claude calls when nothing has changed, director personalities per session, a cap on
-   director-spawned soldiers alive at once.
+6. **Comfort and cost (done):** Claude is skipped while nothing important changes (asked at least every 5
+   minutes, and always for a host request), four personalities (`--personality`, `!director style`), and a cap on
+   director-spawned soldiers alive (`AID_maxDirectorUnits`, checked by the companion and the game).
 
 ## Open questions
 
-1. Will the group's sessions run on the host's PC or a dedicated server?
-2. How much should the director see? It currently gets enemy counts near each player, which is more than
+Saved for later (2026-10-22). Hosting is settled for now: the host's own PC, possibly a dedicated server later.
+
+1. How much should the director see? It currently gets enemy counts near each player, which is more than
    Antistasi's enemy commander knows. Fine for a game master; revisit if it feels unfair.
-3. When to switch from propose to auto mode, once the actions are trusted.
+2. When to switch from propose to auto mode, once the actions are trusted.

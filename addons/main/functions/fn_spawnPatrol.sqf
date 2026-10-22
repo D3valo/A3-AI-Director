@@ -19,6 +19,12 @@ private _target = allPlayers findIf { name _x == _playerName };
 if (_target < 0) exitWith { diag_log format ["[AI Director] spawn_patrol: no player named %1", _playerName] };
 _target = allPlayers select _target;
 private _isSquad = _strength == "squad";
+
+private _alive = [] call AID_fnc_directorUnits;
+private _size = [5, 8] select _isSquad;
+if (_alive + _size > AID_maxDirectorUnits) exitWith {
+    diag_log format ["[AI Director] spawn_patrol: %1 director soldiers alive, cap %2", _alive, AID_maxDirectorUnits]
+};
 private _side = missionNamespace getVariable ["AID_patrolSide", missionNamespace getVariable ["Occupants", east]];
 
 private _hiddenFromPlayers = {
@@ -56,6 +62,7 @@ if (_antistasi) then {
     };
 };
 
+AID_spawnedGroups pushBack _group;
 private _waypoint = _group addWaypoint [getPosATL _target, 75];
 _waypoint setWaypointType "SAD";
 if (_antistasi) then { [_group] spawn A3A_fnc_groupDespawner };
