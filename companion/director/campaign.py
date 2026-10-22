@@ -3,6 +3,7 @@
     campaigns/<name>/logs/decisions-*.jsonl   one decision log per companion run (session)
     campaigns/<name>/reports/<log name>.md    after-action report for each session
     campaigns/<name>/story.md                 the story so far, which the director reads every session
+    campaigns/<name>/campaign.json            settings that stick to the campaign: {"personality": "cinematic"}
 
 After a session, Claude reads a digest of its decision log and writes the report and an updated story.
 """
@@ -14,6 +15,7 @@ import logging
 from datetime import datetime
 from pathlib import Path
 
+from . import personalities
 from .backends import Backend
 from .prompt import REPORT_PROMPT, REPORT_SCHEMA
 
@@ -30,8 +32,32 @@ class Campaign:
         self.logs_dir = self.dir / "logs"
         self.reports_dir = self.dir / "reports"
         self.story_path = self.dir / "story.md"
+        self.settings_path = self.dir / "campaign.json"
         for d in (self.logs_dir, self.reports_dir):
             d.mkdir(parents=True, exist_ok=True)
+
+    def settings(self) -> dict:
+        if not self.settings_path.exists():
+            return {}
+        return json.loads(self.settings_path.read_text(encoding="utf-8"))
+
+    def update_settings(self, **changes: object) -> None:
+        settings = {**self.settings(), **changes}
+        self.settings_path.write_text(json.dumps(settings, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+    def choose_personality(self, asked: str | None, styles: dict[str, str], remember: bool) -> str:
+        """The style asked for (saved for the campaign if `remember`), else the campaign's, else the default."""
+        if asked:
+            if asked not in styles:
+                raise SystemExit(f"Unknown style {asked!r}; known: {', '.join(styles)}")
+            if remember:
+                self.update_settings(personality=asked)
+            return asked
+        saved = self.settings().get("personality", personalities.DEFAULT)
+        if saved not in styles:
+            log.warning("Campaign style %r is no longer defined; using %s", saved, personalities.DEFAULT)
+            return personalities.DEFAULT
+        return saved
 
     def story(self) -> str | None:
         if not self.story_path.exists():
@@ -78,8 +104,10 @@ def session_digest(entries: list[dict]) -> str:
     """A compact, readable account of a session: start and end state, host requests, and every action
     with its reason. Runs of waits are collapsed to a count, as they are most decisions."""
     first, last = entries[0], entries[-1]
+    style = first.get("personality", "unrecorded")
     lines = [
         f"Real time: {first['at']} to {last['at']}, {len(entries)} decisions.",
+        f"Director style: {style}",
         f"At the start: {_situation(first['state'])}",
         f"At the end: {_situation(last['state'])}",
         "",
@@ -89,6 +117,9 @@ def session_digest(entries: list[dict]) -> str:
     for entry in entries:
         decision, state = entry["decision"], entry["state"]
         when = _game_time(state.get("time"))
+        if entry.get("personality", style) != style:
+            style = entry["personality"]
+            lines.append(f"- {when} style changed to {style}")
         if entry.get("new_request"):
             lines.append(f"- {when} host request: {entry['new_request']}")
         if decision["action"] == "wait" and not decision["reason"].startswith("rejected"):

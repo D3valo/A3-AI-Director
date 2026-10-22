@@ -7,5 +7,6 @@ ai_director_x64.dll
 extension/target/
 companion/.venv/
 companion/campaigns/
+companion/personalities.toml
 __pycache__/
 .env

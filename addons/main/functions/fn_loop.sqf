@@ -8,6 +8,7 @@ while { true } do {
     waitUntil { sleep 1; time >= _next || {AID_request != ""} };
     if (AID_enabled && {allPlayers isNotEqualTo []}) then {
         private _request = AID_request;
+        private _style = AID_personality;
         private _result = "ai_director" callExtension ["send_state", [[_request] call AID_fnc_gatherState]];
         _result params ["_status", "_code"];
         if (_code != 0) then {
@@ -17,6 +18,7 @@ while { true } do {
         if (_status == "sent") then {
             // The companion keeps the request until a decision carries it out.
             if (AID_request isEqualTo _request) then { AID_request = "" };
+            AID_sentStyle = _style;  // the style this state asked for; see AID_fnc_onCallback
             _next = time + AID_interval;
         };
         // "busy": the previous state is still with the companion, so try again in a second.

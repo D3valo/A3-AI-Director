@@ -12,7 +12,8 @@
 .PARAMETER Campaign
     The companion's campaign (logs, reports, story so far). Default: infinizo
 .PARAMETER Personality
-    The director's style: balanced, cinematic, merciless or supportive. Default: balanced
+    The director's style: balanced, cinematic, merciless, supportive or one from companion\personalities.toml.
+    Remembered for the campaign; leave it out to use the campaign's.
 .PARAMETER Preset
     The launcher preset export. Default: .hemtt\presets\infinizo.html
 .PARAMETER ModDir
@@ -24,7 +25,7 @@
 #>
 param(
     [string]$Campaign = 'infinizo',
-    [ValidateSet('balanced', 'cinematic', 'merciless', 'supportive')][string]$Personality = 'balanced',
+    [string]$Personality = '',
     [string]$Preset = '.hemtt\presets\infinizo.html',
     [string]$ModDir = 'install\@AIDirector',
     [switch]$NoGame,
@@ -57,8 +58,10 @@ if (-not $NoGame) {
     $mods = @($ids | ForEach-Object { Join-Path $workshop $_ }) + $ModDir
 }
 
+$style = ''
+if ($Personality) { $style = "--personality $Personality " }
 $serve = "Set-Location '$companion'; `$host.UI.RawUI.WindowTitle = 'AI Director ($Campaign)'; " +
-    "& .\.venv\Scripts\python.exe -m director --campaign $Campaign --personality $Personality serve"
+    "& .\.venv\Scripts\python.exe -m director --campaign $Campaign $($style)serve"
 # Windows PowerShell's Start-Process joins arguments with spaces and doesn't quote them, so quote -mod here.
 $arguments = @('-noSplash', '-skipIntro', '-world=empty', "`"-mod=$($mods -join ';')`"")
 
@@ -72,7 +75,7 @@ if ($DryRun) {
 }
 
 Start-Process powershell.exe -ArgumentList '-NoExit', '-Command', $serve
-Write-Host "Companion started in its own window (campaign $Campaign, style $Personality)."
+Write-Host "Companion started in its own window (campaign $Campaign)."
 
 if (-not $NoGame) {
     Start-Process (Join-Path $arma 'arma3_x64.exe') -ArgumentList $arguments -WorkingDirectory $arma

@@ -37,7 +37,7 @@ def serve(director: Director, port: int) -> None:
             if not isinstance(state, dict):
                 self._reply(400, {"error": "state must be a JSON object"})
                 return
-            self._reply(200, director.decide(state).model_dump())
+            self._reply(200, director.reply(state))
 
         def _reply(self, status: int, body: dict) -> None:
             data = json.dumps(body).encode()

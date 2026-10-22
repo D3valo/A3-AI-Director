@@ -42,20 +42,25 @@ switch (_command) do {
     };
     case "!director": {
         private _styles = ["balanced", "cinematic", "merciless", "supportive"];
-        private _style = ["companion's default", AID_personality] select (AID_personality != "");
+        // The style asked for in chat, else the one the companion last used (its campaign's), if known yet.
+        private _style = [missionNamespace getVariable ["AID_lastStyle", "the campaign's own"], AID_personality]
+            select (AID_personality != "");
         if ((toLower (_words param [1, ""])) == "test") exitWith {
             if (isNull _sender) exitWith { "The self-test needs a player to test against." call _reply };
             [name _sender, (toLower (_words param [2, ""])) == "full", _owner] spawn AID_fnc_selfTest;
         };
         if ((toLower (_words param [1, ""])) == "style") exitWith {
             private _choice = toLower (_words param [2, ""]);
+            // Custom styles live in the companion's personalities.toml, so any one-word name is passed on; the
+            // companion's next reply says if it doesn't know it (see AID_fnc_onCallback).
             switch (true) do {
                 case (_choice == ""): {
-                    format ["Style: %1. Choose from %2, or default.", _style, _styles joinString ", "] call _reply;
+                    format ["Style: %1. Built in: %2; custom ones from personalities.toml; or default.",
+                        _style, _styles joinString ", "] call _reply;
                 };
-                case (_choice == "default"): { AID_personality = ""; "Style: the companion's default." call _reply };
-                case (_choice in _styles): { AID_personality = _choice; format ["Style: %1.", _choice] call _reply };
-                default { format ["Unknown style. Choose from %1, or default.", _styles joinString ", "] call _reply };
+                case (_choice == "default"): { AID_personality = ""; "Style: the campaign's own, from the next decision." call _reply };
+                case (count _choice > 32): { "Style names are one short word." call _reply };
+                default { AID_personality = _choice; format ["Style: %1, from the next decision.", _choice] call _reply };
             };
         };
         switch (toLower _rest) do {

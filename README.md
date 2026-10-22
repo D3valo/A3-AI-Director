@@ -109,13 +109,21 @@ Options before the command apply to all commands; `--max-skip` and `--no-report`
 | Option | Default | Effect |
 | --- | --- | --- |
 | `--campaign <name>` | `default` | Which campaign's logs, reports and story to use |
-| `--personality <style>` | `balanced` | `balanced`, `cinematic` (atmosphere and set pieces), `merciless` (more pressure, little help) or `supportive` (small fights, more help). `!director style` overrides it in game |
+| `--personality <style>` | the campaign's, else `balanced` | `balanced`, `cinematic` (atmosphere and set pieces), `merciless` (more pressure, little help), `supportive` (small fights, more help), or a custom style (below). `serve` remembers it for the campaign; `!director style` overrides it for the session |
+| `--personalities <file>` | `companion\personalities.toml` | Custom styles |
 | `--backend <name>` | `claude-code` | `claude-code`, `api` or `offline` |
 | `--effort <level>` | `low` | `low`, `medium` or `high` thinking for decisions |
 | `serve --max-skip <s>` | `300` | While nothing important changes (no deaths, big damage, change in nearby enemies, movement of a few hundred metres, mission or war-level change, time of day), wait without asking Claude, for up to this many seconds. `0` asks every time. Saves usage in quiet spells and long fights |
 | `serve --no-report` | off | Don't write the report and story on Ctrl+C |
 
 Skipped decisions are logged as waits with the backend `skipped`.
+
+### Custom styles
+
+Copy `companion\personalities.example.toml` to `companion\personalities.toml` and edit it. Each `[name]` with a
+`style = "..."` text adds a style (or replaces a built-in one of the same name); the text is added to the director's
+instructions for the whole session. The example has `grimdark` and `guerrilla`. The after-action report names the
+style the session ran with and any change during it.
 
 ## Campaigns
 
@@ -127,6 +135,7 @@ separate games don't mix:
 | `logs\decisions-*.jsonl` | Every decision of a session with the state, Claude's reason and token usage |
 | `reports\decisions-*.md` | After-action report for each session, written for the players |
 | `story.md` | The story so far, rewritten after each session; the director reads it as background for continuity. Edit it freely, or delete it to start the campaign's story afresh |
+| `campaign.json` | Settings that stick to the campaign: its style (`{"personality": "cinematic"}`), saved by `serve --personality` |
 
 ## Chat commands
 
@@ -140,7 +149,7 @@ and players whose Steam UID is in `AID_chatUIDs` can use them; replies go to the
 | `!director status` | On or off, mode, interval, and whether a proposal is waiting |
 | `!director on` / `!director off` | Turn the director on or off |
 | `!director auto` / `!director propose` | Run decisions at once, or wait for `!approve` |
-| `!director style <name>` | Change the director's personality: `balanced`, `cinematic`, `merciless`, `supportive`, or `default` (the companion's `--personality`); `!director style` shows the current one |
+| `!director style <name>` | Change the director's style for this session: a built-in or custom style, or `default` (the campaign's own). If the companion doesn't know the name, it says so and keeps the campaign's. `!director style` shows the current one |
 | `!director test` / `!director test full` | Run the in-game self-test against yourself ([docs/testing.md](docs/testing.md)); `full` also launches an offensive, so only on a throwaway save |
 | `!director help` | List the commands |
 

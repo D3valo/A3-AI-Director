@@ -76,30 +76,8 @@ pending request, set request_done to false.
 """
 
 
-PERSONALITIES: dict[str, str] = {
-    "balanced": "Balanced: follow the guidance above as written.",
-    "cinematic": (
-        "Cinematic: you are telling a story. Favour atmosphere, set pieces and slow-building tension: narrate "
-        "more often, let threats announce themselves before they arrive, and build towards climaxes rather "
-        "than wearing the players down. Spectacle over attrition."
-    ),
-    "merciless": (
-        "Merciless: the occupiers are competent and relentless. Act more often, answer every rebel success "
-        "with a reply, and keep the pressure on a strong squad; rewards and intel are rare. Still never pile "
-        "on a squad that is already broken; hard, not hopeless."
-    ),
-    "supportive": (
-        "Supportive: the players are few or still learning. Keep fights small and readable, help often with "
-        "intel, rewards and missions, and give them time to recover between fights. Pressure comes rarely, "
-        "in fireteams rather than squads."
-    ),
-}
-DEFAULT_PERSONALITY = "balanced"
-
-
-def system_prompt(personality: str) -> str:
-    """The director's system prompt with the session's style. Unknown styles fall back to the default."""
-    style = PERSONALITIES.get(personality, PERSONALITIES[DEFAULT_PERSONALITY])
+def system_prompt(style: str) -> str:
+    """The director's system prompt with the session's style text (see personalities.py)."""
     return f"{SYSTEM_PROMPT}\nStyle for this session. {style}\n"
 
 
@@ -114,7 +92,7 @@ Write two things:
 report: an after-action report of this session in Markdown, for the players to read. Start with a \
 level-1 heading naming the session's character (not the date), then a two or three sentence summary, a \
 timeline of the notable moments in game time, and a short "Director's notes" section on why it paced the \
-session as it did. Write it like a field report from the setting, but keep facts accurate: only report \
+session as it did, naming the director's style (and any change of style during the session). Write it like a field report from the setting, but keep facts accurate: only report \
 what the log shows. The log records the director's decisions, not their outcomes; in propose mode the \
 host may have denied some, so say "the director sent" or "called for", never invent results such as \
 casualties or victories. Under 600 words.

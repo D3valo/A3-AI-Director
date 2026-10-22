@@ -14,8 +14,9 @@ from pydantic import ValidationError
 
 from .backends import Backend
 from .catalogue import DECISION_SCHEMA, MAX_REQUEST_CHARS, Budget, Decision, check
+from . import personalities
 from .pacing import Pacer
-from .prompt import DEFAULT_PERSONALITY, PERSONALITIES, system_prompt
+from .prompt import system_prompt
 
 log = logging.getLogger(__name__)
 
@@ -31,15 +32,19 @@ class Director:
         log_dir: Path,
         effort: str = "low",
         story: str | None = None,
-        personality: str = DEFAULT_PERSONALITY,
+        personality: str = personalities.DEFAULT,
         max_skip: float = 0,
+        styles: dict[str, str] | None = None,
     ) -> None:
         self.backend = backend
         self.effort = effort
         # The campaign's story so far, read once per session.
         self.story = story
         # The session's style, unless the game asks for another (!director style ...).
+        self.styles = styles if styles is not None else dict(personalities.BUILT_IN)
         self.personality = personality
+        # The style the last decision used, reported back to the game.
+        self.last_personality = personality
         self.pacer = Pacer(max_skip)
         self.budget = Budget()
         self.recent: deque[dict] = deque(maxlen=RECENT_DECISIONS)
@@ -60,6 +65,7 @@ class Director:
                 log.info("Request from the host: %s", self.request["text"])
 
             personality = self._personality(state)
+            self.last_personality = personality
             if self.pacer.should_skip(state, has_request=self.request is not None):
                 # Not added to the recent decisions Claude sees: it didn't make this one.
                 decision = Decision.wait("skipped: nothing important changed since Claude last looked")
@@ -76,16 +82,21 @@ class Director:
             self._record(state, request, personality, proposed, decision, usage, time.monotonic() - started)
             return decision
 
+    def reply(self, state: dict) -> dict:
+        """The decision as sent to the game, with the style it used: if the game asked for a style the
+        companion doesn't know, the game sees the difference and says so."""
+        return {**self.decide(state).model_dump(), "personality": self.last_personality}
+
     def _personality(self, state: dict) -> str:
         chosen = state.get("director", {}).get("personality") or self.personality
-        if chosen not in PERSONALITIES:
+        if chosen not in self.styles:
             log.warning("Unknown personality %r; using %s", chosen, self.personality)
             return self.personality
         return chosen
 
     def _ask(self, state: dict, personality: str) -> tuple[Decision, dict | None]:
         answer = self.backend.structured(
-            system_prompt(personality), self._message(state), DECISION_SCHEMA, self.effort, DECISION_TIMEOUT_SECONDS
+            system_prompt(self.styles[personality]), self._message(state), DECISION_SCHEMA, self.effort, DECISION_TIMEOUT_SECONDS
         )
         if answer.data is None:
             return Decision.wait(answer.error or "no answer"), answer.usage

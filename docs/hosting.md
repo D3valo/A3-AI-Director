@@ -16,7 +16,7 @@ tools\install.ps1          # tests, builds and installs the mod to install\@AIDi
 **Each session:**
 
 ```powershell
-tools\start-session.ps1                          # -Personality cinematic, -Campaign <name>, -DryRun to check
+tools\start-session.ps1                          # -Personality <style> (remembered), -Campaign <name>, -DryRun
 ```
 
 It checks that every mod in the preset is downloaded, opens the companion in its own window (campaign

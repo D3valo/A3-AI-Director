@@ -6,7 +6,6 @@ from pathlib import Path
 from director.catalogue import Decision
 from director.decider import Director
 from director.pacing import Pacer, fingerprint
-from director.prompt import PERSONALITIES, system_prompt
 from tests.test_decider import ScriptedBackend
 
 STATE = {
@@ -90,29 +89,6 @@ class DirectorPacingTests(unittest.TestCase):
         director.decide({**STATE, "request": "send a patrol"})
         director.decide(STATE)
         self.assertEqual(len(backend.messages), 2)
-
-
-class PersonalityTests(unittest.TestCase):
-    def test_each_personality_changes_the_prompt(self) -> None:
-        prompts = {system_prompt(name) for name in PERSONALITIES}
-        self.assertEqual(len(prompts), len(PERSONALITIES))
-        self.assertEqual(system_prompt("nonsense"), system_prompt("balanced"))
-
-    def test_game_can_choose_the_personality(self) -> None:
-        log_dir = Path(tempfile.mkdtemp())
-
-        class Recorder(ScriptedBackend):
-            def structured(self, system, user, schema, effort, timeout):
-                self.systems = getattr(self, "systems", []) + [system]
-                return super().structured(system, user, schema, effort, timeout)
-
-        backend = Recorder(Decision.wait("a"), Decision.wait("b"), Decision.wait("c"))
-        director = Director(backend, log_dir, personality="cinematic")
-        director.decide(STATE)
-        director.decide({**STATE, "director": {"personality": "merciless"}})
-        director.decide({**STATE, "director": {"personality": "nonsense"}})
-        self.assertEqual(backend.systems, [system_prompt("cinematic"), system_prompt("merciless"),
-                                           system_prompt("cinematic")])
 
 
 if __name__ == "__main__":

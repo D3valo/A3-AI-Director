@@ -15,6 +15,15 @@ private _decision = fromJSON _data;
 if !(_decision isEqualType createHashMap) exitWith {
     diag_log format ["[AI Director] Malformed decision: %1", _data];
 };
+// The companion says which style it used. If the state asked for one it doesn't know (a custom name set in
+// chat), say so and go back to the campaign's own, unless the style has been changed again since.
+private _asked = missionNamespace getVariable ["AID_sentStyle", ""];
+AID_lastStyle = _decision getOrDefault ["personality", _asked];
+if (_asked != "" && { AID_lastStyle != _asked }) then {
+    [format ["[Director] The companion doesn't know the style '%1'; using '%2'.", _asked, AID_lastStyle]]
+        remoteExec ["systemChat", 0];
+    if (AID_personality == _asked) then { AID_personality = "" };
+};
 private _action = _decision getOrDefault ["action", "wait"];
 private _reason = _decision getOrDefault ["reason", ""];
 diag_log format ["[AI Director] Decision %1: %2", _action, _reason];
