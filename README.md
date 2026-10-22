@@ -87,14 +87,19 @@ cd companion; .venv\Scripts\python -m unittest discover -s tests -t .
 | `[] call AID_fnc_approve` | Run the proposed decision |
 | `AID_request = "send a patrol at us"` | Ask the director for something in plain words. Sent at once; the companion keeps it until a decision carries it out (cooldowns still apply) or Claude says it can't be done with the available actions |
 | `AID_interval = 60` | Seconds between states |
-| `AID_patrolSide`, `AID_patrolUnits` | Side and unit classes for patrols (defaults: Antistasi occupants or OPFOR, vanilla CSAT riflemen) |
+| `AID_patrolSide = Invaders` | Side for patrols (default: Antistasi's `Occupants`, or `east` outside Antistasi) |
+| `AID_patrolUnits` | Unit classes for patrols outside Antistasi (default: vanilla CSAT riflemen) |
 
-To force an action without asking Claude: `["<player name>", "squad"] call AID_fnc_spawnPatrol` or
+In Antistasi, patrols come from the side's faction template at the current war level (a 5-man fireteam or an 8-man
+squad), are spawned and initialised with Antistasi's own functions, cost 10 attack resources per soldier, and
+despawn once no rebels are near.
+
+To force an action without asking Claude: `["<player name>", "squad"] spawn AID_fnc_spawnPatrol` or
 `createHashMapFromArray [["action", "narrate"], ["message", "..."]] call AID_fnc_dispatch` (both server exec).
 
 ## Next steps
 
-- Check in game that state gathering, `fromJSON` of decisions and patrol placement behave as intended.
-- Patrols from Antistasi's own templates and support system, so the director spends the occupants' resources.
+- Check `AID_request` and Antistasi-template patrols in game.
+- More actions through Antistasi's support system (QRFs, mortar fire, convoys), within the same allow-list.
 - A larger, cached system prompt (event catalogue, factions, map zones); the current one is below the minimum
   cacheable size for the `api` backend, so `cache_read_input_tokens` stays 0 there until it grows.

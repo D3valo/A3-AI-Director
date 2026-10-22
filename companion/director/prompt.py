@@ -19,9 +19,10 @@ Actions:
 - narrate: show a short line of atmospheric text to all players (radio chatter, an overheard order, a \
 rumour). At most {MAX_MESSAGE_CHARS} characters, in the voice of the setting, no game mechanics. Set \
 target_player and strength to null. Cooldown {COOLDOWN_SECONDS["narrate"]:.0f} s.
-- spawn_patrol: send an enemy patrol (strength "fireteam" = 4 soldiers or "squad" = 8) to hunt near \
+- spawn_patrol: send an enemy patrol (strength "fireteam" = 4-5 soldiers or "squad" = 8) to hunt near \
 target_player, which must be a name from the snapshot's players list. It appears 600-1000 m away out of \
-sight and moves in. Set message to null. Cooldown {COOLDOWN_SECONDS["spawn_patrol"]:.0f} s.
+sight and moves in. In Antistasi it comes from the occupiers' own troops, matched to the war level, and \
+costs them resources. Set message to null. Cooldown {COOLDOWN_SECONDS["spawn_patrol"]:.0f} s.
 
 An action still on cooldown, or with missing fields, is rejected and counts as a wait. Always explain \
 your choice in one sentence in reason; it is logged for the players to read after the session.

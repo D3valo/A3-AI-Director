@@ -8,8 +8,9 @@
     AID_interval     - seconds between game states sent to the companion.
     AID_request      - a wish for the director in plain words, e.g. "send a patrol at us". Sent at once,
                        then cleared; the director carries it out when its cooldowns allow.
-    AID_patrolSide   - side of spawned patrols.
-    AID_patrolUnits  - unit classes for spawned patrols, used in order and repeated as needed.
+    AID_patrolSide   - side of spawned patrols. Unset by default: patrols then use Antistasi's Occupants
+                       (looked up when each patrol spawns, as Antistasi sets it after this runs), or east.
+    AID_patrolUnits  - unit classes for patrols outside Antistasi, used in order and repeated as needed.
 */
 if (!isServer) exitWith {};
 
@@ -26,7 +27,6 @@ diag_log format ["[AI Director] Extension %1 loaded.", _version select 0];
     ["AID_mode", "propose"],
     ["AID_interval", 90],
     ["AID_request", ""],
-    ["AID_patrolSide", missionNamespace getVariable ["Occupants", east]],
     ["AID_patrolUnits", ["O_Soldier_TL_F", "O_Soldier_AR_F", "O_Soldier_GL_F", "O_Soldier_LAT_F"]]
 ];
 AID_pending = nil;

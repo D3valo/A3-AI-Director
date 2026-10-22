@@ -10,7 +10,8 @@ switch (_decision getOrDefault ["action", "wait"]) do {
         };
     };
     case "spawn_patrol": {
-        [_decision getOrDefault ["target_player", ""], _decision getOrDefault ["strength", "fireteam"]] call AID_fnc_spawnPatrol;
+        // Spawned: this runs from the ExtensionCallback handler or the debug console, which can't sleep.
+        [_decision getOrDefault ["target_player", ""], _decision getOrDefault ["strength", "fireteam"]] spawn AID_fnc_spawnPatrol;
     };
     default {
         diag_log format ["[AI Director] Ignoring unknown action: %1", _decision];
