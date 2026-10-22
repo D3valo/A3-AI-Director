@@ -94,11 +94,28 @@ cd companion; .venv\Scripts\python -m unittest discover -s tests -t .
 3. Host a mission. The server's `.rpt` shows `[AI Director] Extension 0.1.0 loaded.` and then one line per
    decision. Decisions with their reasons and token usage are also in `companion\logs\decisions-*.jsonl`.
 
+## Chat commands
+
+Type these in any chat channel. They are hidden from everyone's chat, and only the host, logged-in or voted admins,
+and players whose Steam UID is in `AID_chatUIDs` can use them; replies go to the sender only.
+
+| Command | Effect |
+| --- | --- |
+| `!director <what you want>` | Ask the director for something, e.g. `!director give us a convoy to ambush` (sets `AID_request`) |
+| `!approve` / `!deny` | Run or drop the proposed decision |
+| `!director status` | On or off, mode, interval, and whether a proposal is waiting |
+| `!director on` / `!director off` | Turn the director on or off |
+| `!director auto` / `!director propose` | Run decisions at once, or wait for `!approve` |
+| `!director help` | List the commands |
+
+Players don't need the mod: the server sends the chat hook to every client, including players who join later.
+
 ## Controls (debug console, server exec)
 
 | Command | Effect |
 | --- | --- |
 | `AID_enabled = false` | Off switch: stop sending states and ignore decisions |
+| `AID_chatUIDs = ["7656119..."]` | Extra players allowed to use the chat commands |
 | `AID_mode = "auto"` | Run decisions at once (default `"propose"`: announced in chat, wait for approval) |
 | `[] call AID_fnc_approve` | Run the proposed decision |
 | `AID_request = "send a patrol at us"` | Ask the director for something in plain words. Sent at once; the companion keeps it until a decision carries it out (cooldowns still apply) or Claude says it can't be done with the available actions |

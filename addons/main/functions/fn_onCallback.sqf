@@ -22,6 +22,6 @@ if (AID_mode == "auto") then {
     _decision call AID_fnc_dispatch;
 } else {
     AID_pending = _decision;
-    [format ["[Director] Proposes %1: %2 - run [] call AID_fnc_approve on the server to allow it.", _action, _reason]]
+    [format ["[Director] Proposes %1: %2 Type !approve or !deny.", _action, _reason]]
         remoteExec ["systemChat", 0];
 };

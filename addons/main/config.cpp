@@ -31,6 +31,8 @@ class CfgFunctions
             class revealEnemies {};
             class rewardRebels {};
             class changeWeather {};
+            class initChat {};
+            class chatCommand {};
         };
     };
 };

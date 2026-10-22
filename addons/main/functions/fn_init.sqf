@@ -11,6 +11,7 @@
     AID_patrolSide   - side of spawned patrols. Unset by default: patrols then use Antistasi's Occupants
                        (looked up when each patrol spawns, as Antistasi sets it after this runs), or east.
     AID_patrolUnits  - unit classes for patrols outside Antistasi, used in order and repeated as needed.
+    AID_chatUIDs     - Steam UIDs (strings) allowed to use the chat commands besides the host and admins.
 */
 if (!isServer) exitWith {};
 
@@ -27,9 +28,11 @@ diag_log format ["[AI Director] Extension %1 loaded.", _version select 0];
     ["AID_mode", "propose"],
     ["AID_interval", 90],
     ["AID_request", ""],
-    ["AID_patrolUnits", ["O_Soldier_TL_F", "O_Soldier_AR_F", "O_Soldier_GL_F", "O_Soldier_LAT_F"]]
+    ["AID_patrolUnits", ["O_Soldier_TL_F", "O_Soldier_AR_F", "O_Soldier_GL_F", "O_Soldier_LAT_F"]],
+    ["AID_chatUIDs", []]
 ];
 AID_pending = nil;
 
 addMissionEventHandler ["ExtensionCallback", { _this call AID_fnc_onCallback }];
+call AID_fnc_initChat;
 [] spawn AID_fnc_loop;
