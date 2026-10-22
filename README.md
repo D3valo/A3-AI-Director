@@ -20,7 +20,7 @@ mod carries it out.
 The actions are defined once in `companion/director/catalogue.py` (`ACTIONS`: fields, cooldown, Antistasi-only);
 the prompt in `prompt.py` tells Claude when each fits.
 
-Proof of concept. The plan and its reasoning are in the A3UE-Warhammer-40k repo, `docs/plans/ai-zeus.md`.
+Proof of concept. The design, its reasoning, status and roadmap are in [docs/plan.md](docs/plan.md).
 
 ```
 Arma 3 server                       Companion (Python, same PC)              Claude API
