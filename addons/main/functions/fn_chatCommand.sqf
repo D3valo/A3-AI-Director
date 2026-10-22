@@ -39,7 +39,7 @@ switch (_command) do {
     };
     case "!deny": {
         if (isNil "AID_pending") exitWith { "Nothing to deny." call _reply };
-        diag_log format ["[AI Director] Denied in chat: %1", AID_pending];
+        ["proposal", format ["The host denied your %1", AID_pending getOrDefault ["action", "?"]]] call AID_fnc_event;
         AID_pending = nil;
         "Proposal dropped." call _reply;
     };

@@ -46,6 +46,10 @@ if (_action == "wait") exitWith {};
 if (AID_mode == "auto") then {
     _decision call AID_fnc_dispatch;
 } else {
+    if (!isNil "AID_pending") then {
+        ["proposal", format ["Your proposed %1 was never answered and was replaced", AID_pending getOrDefault ["action", "?"]]]
+            call AID_fnc_event;
+    };
     AID_pending = _decision;
     [format ["[Director] Proposes %1: %2 Type !approve or !deny.", _action, _reason]]
         remoteExec ["systemChat", 0];

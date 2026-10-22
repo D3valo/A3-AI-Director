@@ -46,11 +46,13 @@ if (!isNull _reached) then {
     private _line = [_message, "They're closer than you think. I've marked what I saw on your map."] select (_message == "");
     [format ["Informant: %1", _line]] remoteExec ["hint", allPlayers select { _x distance _reached < 30 }];
     [name _reached] spawn AID_fnc_revealEnemies;
-    diag_log format ["[AI Director] Informant reached %1", name _reached];
+    ["outcome", format ["Your informant reached %1 and marked the enemies near them", name _reached]]
+        call AID_fnc_event;
     sleep 5;
     _informant doMove (_informant getPos [400, _reached getDir _informant]);
     sleep 120;
 } else {
-    diag_log "[AI Director] Informant never reached anyone";
+    ["outcome", ["Your informant was killed before reaching anyone", "Your informant never reached anyone"]
+        select (alive _informant)] call AID_fnc_event;
 };
 deleteVehicle _informant;

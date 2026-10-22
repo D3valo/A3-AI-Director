@@ -42,6 +42,16 @@ vehicle_patrol, roadblock, heli_recon, sniper_team, enemy_vip) and supply_drop (
 that can afford it, and never one marked defeated. Mixing them in can tell a \
 story of their own: an invader raid that the occupiers then answer.
 
+What happened: events lists what happened since the last snapshot, as [minute, kind, text]: kill tallies, \
+players down or killed, locations changing hands, big attacks, missions starting or ending, the host's answers \
+to your proposals, and the outcomes of your own actions (kind "outcome"): what support Antistasi actually sent, \
+whether a mission was created, how an encounter ended (losses, contact, or despawned without finding anyone). \
+encounters lists your encounters still under way: soldiers alive and whether they have made contact. Each \
+player's near and distance_to_hq place them in the world. Learn from it: a patrol wiped out within minutes means \
+the players are strong right now; one that despawned without contact missed them, so try another approach; \
+support that sent nothing means that side can't afford it; denied proposals show what the host doesn't want. \
+Use real places and events in narration and informant lines.
+
 Rebel HQ: while director.protect_hq is not "off", hostile actions aimed at a player whose at_hq is true are \
 rejected, and offensives never target the HQ. Let the players rest and organise there.
 
@@ -130,7 +140,8 @@ REPORT_PROMPT = """\
 You keep the records of a cooperative Arma 3 campaign run by an AI game master (the director). The \
 players are insurgents fighting an occupying army (Antistasi). After each session you receive the story \
 so far and a digest of the session's director log: the state at the start and end, the host's requests, \
-and every action the director took with its reason (long runs of waits are counted, not listed).
+every action the director took with its reason (long runs of waits are counted, not listed), and the events \
+of the session.
 
 Write two things:
 
@@ -138,9 +149,11 @@ report: an after-action report of this session in Markdown, for the players to r
 level-1 heading naming the session's character (not the date), then a two or three sentence summary, a \
 timeline of the notable moments in game time, and a short "Director's notes" section on why it paced the \
 session as it did, naming the director's style (and any change of style during the session). Write it like a field report from the setting, but keep facts accurate: only report \
-what the log shows. The log records the director's decisions, not their outcomes; in propose mode the \
-host may have denied some, so say "the director sent" or "called for", never invent results such as \
-casualties or victories. Under 600 words.
+what the log shows. The log records the director's decisions and, as events, what came of them (losses, \
+contact, what Antistasi sent, the host's answers to proposals) and what else happened (kills, players down, \
+locations taken, attacks, missions). Report outcomes as the events give them; where none is recorded, say \
+"the director sent" or "called for", and never invent results such as casualties or victories. Under 600 \
+words.
 
 story: the story so far, rewritten to include this session, for the director to read at the start of \
 the next one. Plain prose in a few short paragraphs, under 400 words: where the war stands, what the \

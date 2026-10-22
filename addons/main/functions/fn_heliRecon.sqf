@@ -25,6 +25,7 @@ _heli flyInHeight 150;
 _crew setCombatMode "BLUE";
 _crew setBehaviour "CARELESS";
 _crew move getPosATL _target;
+private _encounter = ["heli_recon", _side, _playerName, [_crew]] call AID_fnc_trackEncounter;
 diag_log format ["[AI Director] Recon helicopter %1 inbound to %2", typeOf _heli, _playerName];
 
 waitUntil { sleep 2; !alive _heli || { _heli distance2D _target < 600 } };
@@ -41,7 +42,11 @@ while { alive _heli && { time < _overheadUntil } } do {
     sleep 10;
 };
 
-if (!alive _heli) exitWith { diag_log "[AI Director] Recon helicopter lost" };
+if (!alive _heli) exitWith {
+    _encounter set ["note", "The helicopter was shot down over the players"];
+    diag_log "[AI Director] Recon helicopter lost";
+};
+_encounter set ["note", "It circled the players and reported them to nearby enemy groups, then left"];
 _crew move (_heli getPos [6000, _target getDir _heli]);
 waitUntil { sleep 5; !alive _heli || { allPlayers findIf { _x distance2D _heli < 3000 } < 0 } };
 if (alive _heli) then {

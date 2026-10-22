@@ -2,7 +2,7 @@
 
 Most decisions are waits, and most states during a quiet spell or a long fight look alike to a game master.
 A state is reduced to a coarse fingerprint (who is alive, rough damage and enemy counts, rough position,
-Antistasi's war level, aggression and missions, time of day); while it stays the same and there is no host
+Antistasi's war level, aggression and missions, time of day); while it stays the same, with no news and no host
 request pending, the director waits without asking Claude, but asks at least every `max_skip` seconds so that a
 long lull is still noticed.
 """
@@ -54,6 +54,12 @@ def _part_of_day(daytime: object) -> str:
     if 18 <= daytime < 20:
         return "dusk"
     return "night"
+
+
+def has_news(state: dict) -> bool:
+    """Whether the state reports something Claude should hear about now: any event but a kill tally (the
+    game's events are [minute, kind, text]). Tallies alone come with every fight and don't need an answer."""
+    return any(event[1] != "kills" for event in state.get("events", []))
 
 
 class Pacer:

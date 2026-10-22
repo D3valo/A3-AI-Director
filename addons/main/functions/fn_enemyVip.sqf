@@ -35,6 +35,7 @@ for "_i" from 0 to 3 do {
     _waypoint setWaypointType (["MOVE", "CYCLE"] select (_i == 3));
 };
 [_group] spawn A3A_fnc_groupDespawner;
+private _encounter = ["enemy_vip", _side, _playerName, [_group]] call AID_fnc_trackEncounter;
 
 private _marker = createMarker [format ["AID_vip_%1", diag_tickTime], getPosATL _officer];
 _marker setMarkerTypeLocal "mil_warning";
@@ -50,10 +51,17 @@ while { alive _officer && { time < _until } } do {
     sleep 15;
 };
 deleteMarker _marker;
+if (alive _officer) then {
+    ["outcome", "The enemy officer was not caught while marked; he got away"] call AID_fnc_event;
+    _encounter set ["note", "The officer got away"];
+};
 if (!alive _officer && { time < _until }) then {
     private _killer = _officer getVariable ["AID_killer", objNull];
     if (side group _killer == teamPlayer) then {
         [0, 500] call A3A_fnc_resourcesFIA;
+        ["outcome", format ["The rebels killed the enemy officer (%1); sympathisers paid 500", name _killer]]
+            call AID_fnc_event;
+        _encounter set ["note", "The officer was killed by the rebels"];
         ["The officer is dead. Sympathisers have sent 500 for the job."] remoteExec ["systemChat", 0];
         diag_log "[AI Director] Enemy VIP killed by the rebels";
     };

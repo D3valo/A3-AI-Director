@@ -48,6 +48,11 @@ class CfgFunctions
             class spawnInfantry {};
             class atProtectedHQ {};
             class protectHQ {};
+            class initFeedback {};
+            class feedback {};
+            class event {};
+            class trackEncounter {};
+            class sideName {};
             class initChat {};
             class chatCommand {};
         };

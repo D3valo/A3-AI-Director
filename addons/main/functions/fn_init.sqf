@@ -51,6 +51,7 @@ AID_arcOwner = 2;    // who asked for it: arc news goes to them only
 AID_spawnedGroups = [];
 
 addMissionEventHandler ["ExtensionCallback", { _this call AID_fnc_onCallback }];
+call AID_fnc_initFeedback;
 call AID_fnc_initChat;
 [] spawn AID_fnc_loop;
 [] spawn AID_fnc_protectHQ;

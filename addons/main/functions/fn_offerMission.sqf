@@ -16,4 +16,12 @@ if (_code == "") exitWith { diag_log format ["[AI Director] offer_mission: unkno
 
 diag_log format ["[AI Director] Requesting %1 (%2) mission", _missionType, _code];
 // Silent: no "no mission available" chat from Petros; a created task is announced as usual.
+private _tasksBefore = +A3A_activeTasks;
 [_code, clientOwner, true] call A3A_fnc_missionRequest;
+// Antistasi starts the task through its scheduler; give it a moment before reporting failure.
+private _deadline = time + 30;
+waitUntil { sleep 2; A3A_activeTasks isNotEqualTo _tasksBefore || { time > _deadline } };
+if (A3A_activeTasks isEqualTo _tasksBefore) then {
+    ["outcome", format ["Your offer_mission (%1): Antistasi found no suitable site; no mission was created", _missionType]]
+        call AID_fnc_event;
+};

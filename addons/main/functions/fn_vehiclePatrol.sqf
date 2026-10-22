@@ -38,6 +38,7 @@ private _waypoint = _crew addWaypoint [getPosATL _target, 100];
 _waypoint setWaypointType "SAD";
 [_crew] spawn A3A_fnc_groupDespawner;
 [_vehicle] spawn A3A_fnc_VEHdespawner;
+["vehicle_patrol", _side, _playerName, [_crew]] call AID_fnc_trackEncounter;
 
 diag_log format ["[AI Director] Vehicle patrol: %1 with %2 soldiers at %3, %4 m from %5",
     typeOf _vehicle, count units _crew, _pos, round (_pos distance2D _target), _playerName];

@@ -38,6 +38,7 @@ private _waypoint = _group addWaypoint [_best, 0];
 _waypoint setWaypointType "HOLD";
 _group reveal [_target, 1.5];
 [_group] spawn A3A_fnc_groupDespawner;
+["sniper_team", _side, _playerName, [_group]] call AID_fnc_trackEncounter;
 
 diag_log format ["[AI Director] Sniper team at %1, %2 m from %3, %4",
     _best, round (_best distance2D _target), _playerName, ["no line of sight", "line of sight"] select (_bestScore >= 1000)];

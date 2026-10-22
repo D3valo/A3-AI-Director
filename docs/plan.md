@@ -89,6 +89,7 @@ about the local game, not a long-running agent with a workspace.
 | Custom and per-campaign styles | Built, unit tests; not in game |
 | Seven more encounters | Built, chosen sensibly by Claude in sample scenarios; not in game |
 | Enemy side choice, HQ protection, API prompt caching, story arcs | Built; arcs planned live by Claude; not in game |
+| Outcome feedback | Built; Claude used it in a sample state (adapted after a wiped-out patrol and a denied proposal); not in game |
 
 ## Next
 
@@ -97,10 +98,8 @@ about the local game, not a long-running agent with a workspace.
 2. **Real game setup (done):** `tools/install.ps1` installs the mod to `install\@AIDirector`, and
    `tools/start-session.ps1` starts the companion and Arma with the group's 146 mods, BattlEye off ([hosting.md](hosting.md)).
    Sessions start on the host's own PC; hosting.md also covers a later dedicated server.
-3. **Outcome feedback:** tell the director what its actions led to (patrol contact and losses, what support
-   Antistasi sent or that it sent nothing, missions taken up or finished) and recent events (players downed,
-   towns changing hands, attacks starting and ending), plus where players are in Antistasi's world (nearest
-   location and its owner, distance from HQ, vehicle). Reports then describe what happened, not only what was sent.
+3. **Outcome feedback (done):** outcomes of the director's actions, its encounters under way, events since the last
+   state (kills, players down, locations, attacks, missions, proposal answers) and where players are. Not in game yet.
 4. **More encounters (done):** vehicle patrol, roadblock, helicopter recon, sniper team, informant, supply drop and
    enemy VIP, all from Antistasi's templates and functions; in the self-test, not yet played. Deserters were
    left out: recruits already come from reward_rebels.

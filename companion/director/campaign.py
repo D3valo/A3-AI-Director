@@ -128,9 +128,15 @@ def session_digest(entries: list[dict]) -> str:
             waits = 0
         lines.append(line)
 
-    for entry in entries:
+    # Events of skipped states are passed on with the next state Claude sees, so list them there, except for any
+    # skipped states after the last one Claude saw.
+    last_asked = max((i for i, e in enumerate(entries) if e.get("backend") != "skipped"), default=-1)
+    for index, entry in enumerate(entries):
         decision, state = entry["decision"], entry["state"]
         when = _game_time(state.get("time"))
+        if entry.get("backend") != "skipped" or index > last_asked:
+            for minute, kind, text in state.get("events", []):
+                note(f"- {_game_time(minute * 60)} {kind}: {text}")
         if entry.get("personality", style) != style:
             style = entry["personality"]
             note(f"- {when} style changed to {style}")

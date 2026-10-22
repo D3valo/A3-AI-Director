@@ -22,7 +22,12 @@ if (_held) then { missionNamespace setVariable [_knowledgeVar, 0.99] };
 
 diag_log format ["[AI Director] Launching %1 offensive%2", _side, ["", " (HQ protected)"] select _held];
 private _launched = [_side] call A3A_fnc_chooseAttack;
+if (isNil "_launched") then { _launched = missionNamespace getVariable ["bigAttackInProgress", false] };
 if (_held) then {
     missionNamespace setVariable [_knowledgeVar, _knowledge + (missionNamespace getVariable [_knowledgeVar, 0.99]) - 0.99];
 };
-if (!_launched) then { diag_log "[AI Director] launch_offensive: Antistasi found no valid attack" };
+["outcome", [
+    format ["Your launch_offensive (%1): Antistasi found no valid attack, nothing launched", [_side] call AID_fnc_sideName],
+    format ["Your launch_offensive (%1): Antistasi launched an attack%2", [_side] call AID_fnc_sideName,
+        [" (a convoy or simulated capture)", "; a major attack is under way"] select (missionNamespace getVariable ["bigAttackInProgress", false])]
+] select _launched] call AID_fnc_event;

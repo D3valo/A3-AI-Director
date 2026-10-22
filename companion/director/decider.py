@@ -16,7 +16,7 @@ from . import personalities
 from .arcs import ARC_SCHEMA, Arc, ArcPlan
 from .backends import Backend
 from .catalogue import DECISION_SCHEMA, MAX_REQUEST_CHARS, Budget, Decision, check
-from .pacing import Pacer
+from .pacing import Pacer, has_news
 from .prompt import ARC_PROMPT, system_prompt
 
 log = logging.getLogger(__name__)
@@ -50,6 +50,8 @@ class Director:
         # The style the last decision used, reported back to the game.
         self.last_personality = personality
         self.pacer = Pacer(max_skip)
+        # Events from states the pacer answered without Claude, passed on with the next one Claude sees.
+        self.unseen_events: list = []
         self.budget = Budget()
         self.recent: deque[dict] = deque(maxlen=RECENT_DECISIONS)
         # The host's latest request, kept until a decision carries it out or declines it.
@@ -82,13 +84,17 @@ class Director:
 
             personality = self._personality(state)
             self.last_personality = personality
-            busy = self.request is not None or self.arc is not None
+            busy = self.request is not None or self.arc is not None or has_news(state)
             if self.pacer.should_skip(state, has_request=busy):
-                # Not added to the recent decisions Claude sees: it didn't make this one.
+                # Not added to the recent decisions Claude sees: it didn't make this one. Its events (kill
+                # tallies) go with the next state Claude does see.
+                self.unseen_events += state.get("events", [])
                 decision = Decision.wait("skipped: nothing important changed since Claude last looked")
                 self._record(state, request, personality, None, decision, None, time.monotonic() - started)
                 return decision
 
+            state["events"] = self.unseen_events + state.get("events", [])
+            self.unseen_events = []
             proposed, usage = self._ask(state, personality)
             self.pacer.asked(state)
             decision = check(proposed, state, self.budget)

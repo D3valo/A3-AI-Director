@@ -38,6 +38,7 @@ private _guards = [_side, _types, _pos getPos [12, _across + 90]] call AID_fnc_s
     [_x] spawn A3A_fnc_groupDespawner;
 } forEach [_crew, _guards];
 [_vehicle] spawn A3A_fnc_VEHdespawner;
+["roadblock", _side, _playerName, [_crew, _guards]] call AID_fnc_trackEncounter;
 
 diag_log format ["[AI Director] Roadblock: %1 and %2 soldiers at %3, %4 m from %5",
     typeOf _vehicle, count units _crew + count units _guards, _pos, round (_pos distance2D _target), _playerName];

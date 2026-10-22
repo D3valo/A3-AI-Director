@@ -18,7 +18,12 @@
     "active_missions": [
       "CON"
     ],
-    "big_attack_in_progress": false
+    "big_attack_in_progress": false,
+    "locations_held": {
+      "occupants": 31,
+      "rebels": 4,
+      "invaders": 6
+    }
   },
   "players": [
     {
@@ -33,7 +38,16 @@
       "in_vehicle": false,
       "group_size": 4,
       "nearby_enemies_1km": 0,
-      "last_contact_s": 1100
+      "last_contact_s": 1100,
+      "down": false,
+      "vehicle": "",
+      "at_hq": false,
+      "distance_to_hq": 2400,
+      "near": {
+        "place": "Outpost near Kavala",
+        "held_by": "occupants",
+        "distance": 650
+      }
     },
     {
       "name": "Alpha 1-2",
@@ -47,7 +61,40 @@
       "in_vehicle": false,
       "group_size": 4,
       "nearby_enemies_1km": 0,
-      "last_contact_s": 1100
+      "last_contact_s": 1100,
+      "down": false,
+      "vehicle": "",
+      "at_hq": false,
+      "distance_to_hq": 2400,
+      "near": {
+        "place": "Outpost near Kavala",
+        "held_by": "occupants",
+        "distance": 650
+      }
     }
-  ]
+  ],
+  "events": [
+    [
+      86,
+      "outcome",
+      "Your spawn_patrol (occupants) against Alpha 1-1, 6 min ago: wiped out, all 5 killed, contact after 2 min"
+    ],
+    [
+      87,
+      "kills",
+      "The rebels killed 5 occupants"
+    ],
+    [
+      88,
+      "proposal",
+      "The host denied your call_support"
+    ]
+  ],
+  "encounters": [],
+  "director": {
+    "units_alive": 0,
+    "units_max": 24,
+    "personality": "",
+    "protect_hq": "director"
+  }
 }

@@ -44,6 +44,7 @@ if (_antistasi) then {
 private _waypoint = _group addWaypoint [getPosATL _target, 75];
 _waypoint setWaypointType "SAD";
 if (_antistasi) then { [_group] spawn A3A_fnc_groupDespawner };
+["spawn_patrol", _side, _playerName, [_group]] call AID_fnc_trackEncounter;
 
 diag_log format [
     "[AI Director] Spawned %1 (%2 units, %3, %4) at %5, %6 m from %7",

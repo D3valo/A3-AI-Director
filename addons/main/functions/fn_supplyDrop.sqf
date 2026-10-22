@@ -39,6 +39,8 @@ waitUntil { sleep 2; isNull _crate || { (getPosATL _crate select 2) < 2 } };
 if (!isNull _crate) then {
     createVehicle ["SmokeShellGreen", getPosATL _crate, [], 0, "CAN_COLLIDE"];
     _marker setMarkerPos getPosATL _crate;
+    ["outcome", format ["Your supply_drop landed %1 m from %2", round (_crate distance2D _target), _playerName]]
+        call AID_fnc_event;
 };
 sleep 600;
 deleteMarker _marker;

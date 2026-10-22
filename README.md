@@ -205,8 +205,21 @@ To force an action without asking Claude: `["<player name>", "squad"] spawn AID_
 
 ## Next steps
 
-See [docs/plan.md](docs/plan.md): the in-game test session, then outcome feedback (telling the director what its
-actions led to).
+See [docs/plan.md](docs/plan.md): the in-game test session first.
+
+## What the director hears back
+
+Each state carries what happened since the last one, so the director can learn from its own moves:
+
+| Feedback | Examples |
+| --- | --- |
+| Outcomes of its actions | `Your spawn_patrol (occupants) against Alpha 1-1, 6 min ago: wiped out, all 5 killed, contact after 2 min`; what Antistasi actually sent for `call_support` (or that it sent nothing); no mission created for `offer_mission`; offensive launched or not; informant reached; supply crate landed; the VIP killed or got away |
+| Encounters under way | Each director encounter still alive: soldiers alive, minutes since contact |
+| Events | Kill tallies by side, players down or back up, players killed, locations taken (with their Antistasi names), big attacks starting and ending, missions starting and ending, the host approving, denying or ignoring proposals |
+| Where the players are | Each player's nearest named location, who holds it and how far, distance to the HQ, vehicle |
+
+Events other than kill tallies make the director ask Claude even in a quiet spell; tallies from skipped states are
+passed on with the next one. The after-action report uses them to say what happened, not only what was sent.
 
 ## Story arcs
 
