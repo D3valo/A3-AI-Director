@@ -159,12 +159,57 @@ if (_antistasi) then {
     };
 };
 
-// Clean up the test patrols; everything else stays as the real actions would leave it.
+// Encounters. The soldier cap is lifted meanwhile so earlier director soldiers can't fail the test.
+private _encounterGroupsBefore = +AID_spawnedGroups;
+private _newGroups = { AID_spawnedGroups select { !(_x in _encounterGroupsBefore) && { !isNull _x } } };
+private _inVehicle = { (call _newGroups) findIf { units _x findIf { !isNull objectParent _x } >= 0 } >= 0 };
+private _markerExists = { params ["_prefix"]; allMapMarkers findIf { _x find _prefix == 0 } >= 0 };
+AID_maxDirectorUnits = 1e6;
+
+AID_lastInformant = objNull;
+[_playerName, "Director self-test: I am the informant. Walk up to me."] spawn AID_fnc_informant;
+private _walking = [{ !isNull AID_lastInformant }, 10] call _waitFor;
+["informant", _walking, ["no informant appeared; see the .rpt",
+    format ["a civilian is walking to you from %1 m; reach them for a hint and intel markers",
+        round (AID_lastInformant distance2D _target)]] select _walking] call _report;
+
+if (_antistasi) then {
+    [_playerName] call AID_fnc_vehiclePatrol;
+    ["vehicle_patrol", call _inVehicle, "an armed vehicle with a fireteam (see the .rpt for type and distance)"]
+        call _report;
+
+    private _before = count (call _newGroups);
+    [_playerName] call AID_fnc_roadblock;
+    ["roadblock", count (call _newGroups) > _before,
+        "a vehicle and a fireteam on a road ahead of you (a WARN-worthy miss if you are far from roads)", true]
+        call _report;
+
+    _before = count (call _newGroups);
+    [_playerName] call AID_fnc_sniperTeam;
+    ["sniper_team", count (call _newGroups) > _before, "a sniper and spotter on high ground"] call _report;
+
+    [_playerName] spawn AID_fnc_heliRecon;
+    private _flying = [{ (call _newGroups) findIf { (vehicle leader _x) isKindOf "Air" } >= 0 }, 15] call _waitFor;
+    ["heli_recon", _flying, ["no helicopter (does the faction have light or transport helicopters?)",
+        "a helicopter is inbound; it circles you for two minutes without firing"] select _flying, true] call _report;
+
+    [_playerName] spawn AID_fnc_supplyDrop;
+    private _dropping = [{ ["AID_drop_"] call _markerExists }, 15] call _waitFor;
+    ["supply_drop", _dropping, "a crate is parachuting in nearby, marked on the map"] call _report;
+
+    [_playerName] spawn AID_fnc_enemyVip;
+    private _vip = [{ ["AID_vip_"] call _markerExists }, 30] call _waitFor;
+    ["enemy_vip", _vip, "an officer and escort are marked on the map"] call _report;
+};
+AID_maxDirectorUnits = _cap;
+
+// Clean up the test soldiers and their vehicles; everything else (informant, crate, markers) stays as the real
+// actions would leave it.
 {
     private _group = _x;
-    { deleteVehicle _x } forEach units _group;
+    { deleteVehicle objectParent _x; deleteVehicle _x } forEach units _group;
     deleteGroup _group;
-} forEach _testGroups;
+} forEach (_testGroups + call _newGroups);
 
 AID_enabled = _wasEnabled;
 AID_testRunning = nil;

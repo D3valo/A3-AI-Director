@@ -78,6 +78,26 @@ class CatalogueTests(unittest.TestCase):
         self.assertFalse(self.allowed(squad, with_alive(17)))
         self.assertTrue(self.allowed(fireteam, with_alive(19)))
 
+    def test_encounters(self) -> None:
+        def at(action: str, **fields) -> Decision:
+            return decision(action, target_player="Alpha 1-1", **fields)
+
+        for action in ("vehicle_patrol", "roadblock", "heli_recon", "sniper_team", "supply_drop", "enemy_vip"):
+            self.assertFalse(self.allowed(at(action)), f"{action} outside Antistasi")
+            self.assertTrue(self.allowed(at(action), ANTISTASI), action)
+        # The informant works anywhere, with or without a line, but not an overlong one.
+        self.assertTrue(self.allowed(at("informant")))
+        self.clock.now += 10_000
+        self.assertTrue(self.allowed(at("informant", message="The convoy leaves at dawn.")))
+        self.clock.now += 10_000
+        self.assertFalse(self.allowed(at("informant", message="x" * 201)))
+
+    def test_encounters_respect_the_soldier_cap(self) -> None:
+        near_cap = {**ANTISTASI, "director": {"units_alive": 20, "units_max": 24}}
+        self.assertFalse(self.allowed(decision("vehicle_patrol", target_player="Alpha 1-1"), near_cap))
+        self.assertTrue(self.allowed(decision("sniper_team", target_player="Alpha 1-1"), near_cap))
+        self.assertTrue(self.allowed(decision("supply_drop", target_player="Alpha 1-1"), near_cap))
+
     def test_cooldown(self) -> None:
         spawn = decision("spawn_patrol", target_player="Alpha 1-1", strength="fireteam")
         self.assertTrue(self.allowed(spawn))

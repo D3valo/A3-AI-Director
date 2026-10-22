@@ -86,6 +86,8 @@ about the local game, not a long-running agent with a workspace.
 | Chat commands | Built, not tested in game |
 | Campaign memory (reports, story so far) | Built, tested on a real session log |
 | Comfort: skipping unchanged states, personalities, soldier cap | Built; personalities tested against Claude, the rest by unit tests; not in game |
+| Custom and per-campaign styles | Built, unit tests; not in game |
+| Seven more encounters | Built, chosen sensibly by Claude in sample scenarios; not in game |
 
 ## Next
 
@@ -98,8 +100,9 @@ about the local game, not a long-running agent with a workspace.
    Antistasi sent or that it sent nothing, missions taken up or finished) and recent events (players downed,
    towns changing hands, attacks starting and ending), plus where players are in Antistasi's world (nearest
    location and its owner, distance from HQ, vehicle). Reports then describe what happened, not only what was sent.
-4. **More encounters:** vehicle patrols, roadblocks, helicopter recon, sniper teams, informants and deserters,
-   supply drops, an enemy VIP.
+4. **More encounters (done):** vehicle patrol, roadblock, helicopter recon, sniper team, informant, supply drop and
+   enemy VIP, all from Antistasi's templates and functions; in the self-test, not yet played. Deserters were
+   left out: recruits already come from reward_rebels.
 5. **Story arcs:** short multi-step plots planned across several decisions, building on 3 and the campaign story.
 6. **Comfort and cost (done):** Claude is skipped while nothing important changes (asked at least every 5
    minutes, and always for a host request), four personalities (`--personality`, `!director style`), and a cap on

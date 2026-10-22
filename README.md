@@ -16,6 +16,17 @@ mod carries it out.
 | `reveal_enemies` | Enemy groups within 1.5 km of a player marked on every map for 5 minutes | 10 min |
 | `reward_rebels` | Antistasi only: small (300 money, 1 recruit) or large (1000 money, 3 recruits) donation | 30 min |
 | `change_weather` | Clear, overcast, rain, storm or fog, over 5 minutes | 20 min |
+| `vehicle_patrol` | Antistasi only: an armed light vehicle with a fireteam drives in from a road 0.9-1.5 km away and hunts near a player | 15 min |
+| `roadblock` | Antistasi only: an armed vehicle and a fireteam hold a road 500-900 m ahead of a player's direction of travel | 20 min |
+| `heli_recon` | Antistasi only: a light helicopter circles a player for two minutes without firing; nearby enemy groups learn where the players are | 15 min |
+| `sniper_team` | Antistasi only: a sniper and spotter on high ground 400-800 m away with a view of a player | 15 min |
+| `informant` | A civilian walks up to a player; when reached, says the director's line and marks nearby enemies on the map | 20 min |
+| `supply_drop` | Antistasi only: a captured enemy crate with Antistasi loot parachutes in 100-200 m away, marked and with green smoke | 30 min |
+| `enemy_vip` | Antistasi only: an officer and escort patrol 0.7-1.2 km away, marked for 10 minutes; killing him pays the rebels 500 | 30 min |
+
+Encounters are built from the enemy side's Antistasi templates for the war level, spawned out of players' sight, set
+up with Antistasi's own unit and vehicle functions, paid for from its attack resources, and despawned by Antistasi
+once no rebels are near. Those that spawn soldiers count against `AID_maxDirectorUnits`.
 
 The actions are defined once in `companion/director/catalogue.py` (`ACTIONS`: fields, cooldown, Antistasi-only);
 the prompt in `prompt.py` tells Claude when each fits.

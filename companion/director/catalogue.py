@@ -18,7 +18,8 @@ from pydantic import BaseModel, ConfigDict
 
 Action = Literal[
     "wait", "narrate", "spawn_patrol", "call_support", "offer_mission", "launch_offensive",
-    "reveal_enemies", "reward_rebels", "change_weather",
+    "reveal_enemies", "reward_rebels", "change_weather", "vehicle_patrol", "roadblock", "heli_recon",
+    "sniper_team", "informant", "supply_drop", "enemy_vip",
 ]
 Strength = Literal["fireteam", "squad"]
 MissionType = Literal["assassination", "conquest", "destroy", "logistics", "supplies", "rescue", "convoy"]
@@ -32,7 +33,8 @@ MISSION_CODES: dict[str, str] = {
 }
 # Antistasi's attack costs at least this many attack resources.
 OFFENSIVE_MIN_ATTACK_RESOURCES = 400
-# Largest patrol of each strength (Antistasi fireteams are 5, vanilla ones 4), for the soldier cap.
+# Largest patrol of each strength (Antistasi fireteams are 5, vanilla ones 4), for the soldier cap; other
+# encounters give their size in ActionSpec.soldiers.
 PATROL_SIZE: dict[str, int] = {"fireteam": 5, "squad": 8}
 
 
@@ -41,6 +43,8 @@ class ActionSpec:
     fields: tuple[str, ...] = ()
     cooldown: float = 0
     antistasi: bool = False
+    # Most director soldiers it spawns, for the soldier cap.
+    soldiers: int = 0
 
 
 ACTIONS: dict[str, ActionSpec] = {
@@ -53,6 +57,14 @@ ACTIONS: dict[str, ActionSpec] = {
     "reveal_enemies": ActionSpec(("target_player",), cooldown=600),
     "reward_rebels": ActionSpec(("reward",), cooldown=1800, antistasi=True),
     "change_weather": ActionSpec(("weather",), cooldown=1200),
+    "vehicle_patrol": ActionSpec(("target_player",), cooldown=900, antistasi=True, soldiers=8),
+    "roadblock": ActionSpec(("target_player",), cooldown=1200, antistasi=True, soldiers=8),
+    "heli_recon": ActionSpec(("target_player",), cooldown=900, antistasi=True),
+    "sniper_team": ActionSpec(("target_player",), cooldown=900, antistasi=True, soldiers=2),
+    # The informant's line is the optional message.
+    "informant": ActionSpec(("target_player",), cooldown=1200),
+    "supply_drop": ActionSpec(("target_player",), cooldown=1800, antistasi=True),
+    "enemy_vip": ActionSpec(("target_player",), cooldown=1800, antistasi=True, soldiers=6),
 }
 COOLDOWN_SECONDS: dict[str, float] = {name: spec.cooldown for name, spec in ACTIONS.items() if spec.cooldown}
 
@@ -151,12 +163,11 @@ def _problem(decision: Decision, state: dict, budget: Budget) -> str | None:
         return f"unknown target player {decision.target_player!r}"
 
     director = state.get("director", {})
+    soldiers =PATROL_SIZE[decision.strength] if decision.action == "spawn_patrol" else spec.soldiers
+    if soldiers and director.get("units_alive", 0) + soldiers > director.get("units_max", float("inf")):
+        return f"too many director soldiers alive ({director['units_alive']} of {director['units_max']})"
     match decision.action:
-        case "spawn_patrol" if (
-            director.get("units_alive", 0) + PATROL_SIZE[decision.strength] > director.get("units_max", float("inf"))
-        ):
-            return f"too many director soldiers alive ({director['units_alive']} of {director['units_max']})"
-        case "narrate" if len(decision.message) > MAX_MESSAGE_CHARS:
+        case "narrate" | "informant" if decision.message and len(decision.message) > MAX_MESSAGE_CHARS:
             return f"message longer than {MAX_MESSAGE_CHARS} characters"
         case "offer_mission" if MISSION_CODES[decision.mission_type] in antistasi.get("active_missions", []):
             return f"a {decision.mission_type} mission is already active"
