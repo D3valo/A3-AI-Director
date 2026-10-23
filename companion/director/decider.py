@@ -240,9 +240,15 @@ class Director:
     def _message(self, state: dict) -> str:
         view = {k: v for k, v in state.items() if k != "time"} | {"minute": _minute(state)}
         cooling = self.budget.cooling_down()
+        if not state.get("director", {}).get("cooldowns", True):
+            cooldowns = "none: the host turned the cooldowns off, so every action is available now"
+        else:
+            cooldowns = ", ".join(
+                f"{name} ({max(1, round(left / 60))})" for name, left in sorted(cooling.items())
+            ) or "none"
         parts = [
             "Actions on cooldown (minutes left); every other action is available now:",
-            ", ".join(f"{name} ({max(1, round(left / 60))})" for name, left in sorted(cooling.items())) or "none",
+            cooldowns,
             "",
             "Recent decisions, oldest first:",
             json.dumps(list(self.recent), sort_keys=True),

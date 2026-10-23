@@ -63,6 +63,15 @@ class CfgFunctions
             class airAttack {};
             class initChat {};
             class chatCommand {};
+            class antistasiEvent {};
+            class rivalsActive {};
+            class attackTarget {};
+            class placeKind {};
+            class counterattack {};
+            class wavedAttack {};
+            class punishTown {};
+            class punishmentsAllowed {};
+            class attackHQ {};
         };
     };
 };

@@ -21,6 +21,8 @@
                        by !director arc). Sent at once, then cleared.
     AID_personality  - the director's style for this session (a built-in or custom style); "" uses the
                        campaign's.
+    AID_cooldowns    - false lets the director use any action at any time (!director cooldowns off); the companion
+                       enforces the cooldowns and reads this from each state.
 */
 if (!isServer) exitWith {};
 
@@ -42,7 +44,43 @@ diag_log format ["[AI Director] Extension %1 loaded.", _version select 0];
     ["AID_maxDirectorUnits", 24],
     ["AID_personality", ""],
     ["AID_protectHQ", "director"],
-    ["AID_hqRadius", 500]
+    ["AID_hqRadius", 500],
+    ["AID_cooldowns", true]
+];
+// Antistasi Ultimate's random events by the director's names: [function, the flag Antistasi runs it under].
+AID_antistasiEvents = createHashMapFromArray [
+    ["civilian_heli", ["SCRT_fnc_encounter_civHeli", "isEventInProgress"]],
+    ["civilian_plane", ["SCRT_fnc_encounter_civPlane", "isEventInProgress"]],
+    ["police_patrol", ["SCRT_fnc_encounter_police", "isEventInProgress"]],
+    ["police_skirmish", ["SCRT_fnc_encounter_policeSkirmish", "isEventInProgress"]],
+    ["police_hostages", ["SCRT_fnc_encounter_policeHostages", "isEventInProgress"]],
+    ["supply_truck", ["SCRT_fnc_encounter_vehicleMove", "isEventInProgress"]],
+    ["outpost_patrol", ["SCRT_fnc_encounter_vehiclePatrol", "isEventInProgress"]],
+    ["ambush_wreck", ["SCRT_fnc_encounter_postAmbush", "isEventInProgress"]],
+    ["ambushed_convoy", ["SCRT_fnc_encounter_postAmbushConvoy", "isEventInProgress"]],
+    ["battle_aftermath", ["SCRT_fnc_encounter_postBattle", "isEventInProgress"]],
+    ["repair_crew", ["SCRT_fnc_encounter_repair", "isEventInProgress"]],
+    ["medevac", ["SCRT_fnc_encounter_MedEvac", "isEventInProgress"]],
+    ["heli_slingload", ["SCRT_fnc_encounter_HeliSlingloadCargo", "isEventInProgress"]],
+    ["frontline_skirmish", ["SCRT_fnc_encounter_frontlineSkirmish", "isEventInProgress"]],
+    ["specops_airdrop", ["SCRT_fnc_encounter_SpecOpsAirdrop", "isEventInProgress"]],
+    ["rivals_car_bomb", ["SCRT_fnc_rivals_encounter_carDemo", "isRivalEventInProgress"]],
+    ["rivals_drone_strike", ["SCRT_fnc_rivals_encounter_uavFlyby", "isRivalEventInProgress"]],
+    ["rivals_roving_mortar", ["SCRT_fnc_rivals_encounter_rovingMortar", "isRivalEventInProgress"]],
+    ["rivals_heli_raid", ["SCRT_fnc_rivals_encounter_heliRaid", "isRivalEventInProgress"]],
+    // These two clear isEventInProgress when they end (see AID_fnc_antistasiEvent).
+    ["rivals_vs_occupants", ["SCRT_fnc_rivals_encounter_OccVsRivalsSkirmish", "isEventInProgress"]],
+    ["rivals_vs_police", ["SCRT_fnc_rivals_encounter_policeVsRivalsskirmish", "isEventInProgress"]]
+];
+// Kinds of location Antistasi's own attacks go for (A3A_fnc_findAttackTargets), besides towns and the HQ.
+AID_attackableKinds = ["airbase", "military base", "outpost", "seaport", "factory", "resource"];
+// Antistasi's support types by the director's names (see A3A_fnc_initSupports).
+AID_supportTypes = createHashMapFromArray [
+    ["airstrike", "AIRSTRIKE"], ["carpet_bombs", "CARPETBOMBS"], ["cruise_missile", "CRUISEMISSILE"],
+    ["orbital_strike", "ORBITALSTRIKE"], ["gunship", "GUNSHIP"], ["artillery", "ARTILLERY"], ["mortar", "MORTAR"],
+    ["howitzer", "HOWITZER"], ["cas", "CAS"], ["cas_dive", "CASDIVE"], ["uav_attack", "UAVAttack"], ["tank", "TANK"],
+    ["qrf_land", "QRFLAND"], ["qrf_air", "QRFAIR"], ["qrf_vehicle_airdrop", "QRFVEHAIRDROP"],
+    ["qrf_orbital", "QRFORBITAL"], ["air_superiority", "ASF"], ["sam", "SAM"]
 ];
 AID_pending = nil;
 AID_arcRequest = [];

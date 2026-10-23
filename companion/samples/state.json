@@ -23,7 +23,41 @@
       "occupants": 31,
       "rebels": 4,
       "invaders": 6
-    }
+    },
+    "random_event_running": false,
+    "rivals_active": false,
+    "rivals_event_running": false,
+    "punishments_allowed": false,
+    "support_types": {
+      "occupants": [
+        "airstrike",
+        "artillery",
+        "cas",
+        "mortar",
+        "qrf_air",
+        "qrf_land",
+        "tank",
+        "uav_attack"
+      ],
+      "invaders": [
+        "cas",
+        "qrf_air",
+        "qrf_land",
+        "tank"
+      ]
+    },
+    "rebel_places": [
+      {
+        "place": "Outpost Kavala East",
+        "kind": "outpost",
+        "nearest_player": 1300
+      },
+      {
+        "place": "Kavala",
+        "kind": "town",
+        "nearest_player": 1800
+      }
+    ]
   },
   "players": [
     {
@@ -99,7 +133,8 @@
     "units_alive": 0,
     "units_max": 24,
     "personality": "",
-    "protect_hq": "director"
+    "protect_hq": "director",
+    "cooldowns": true
   },
   "host_notes": []
 }

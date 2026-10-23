@@ -55,6 +55,7 @@ private _players = (allPlayers - entities "HeadlessClient_F") apply {
         _info set ["enemy_places", (_targets select [0, 4]) apply {
             createHashMapFromArray [
                 ["place", [_x] call AID_fnc_placeName],
+                ["kind", [_x] call AID_fnc_placeKind],
                 ["held_by", [sidesX getVariable [_x, sideUnknown]] call AID_fnc_sideName],
                 ["distance", round (_player distance2D markerPos _x)]
             ]
@@ -73,6 +74,34 @@ private _encounters = AID_encounters apply {
         ["soldiers", count _units], ["alive", { alive _x } count _units],
         ["contact_after_minutes", [-1, round ((_contact - (_x get "started")) / 60)] select (_contact >= 0)]
     ]
+};
+
+// Rebel-held locations (not the HQ), nearest to a player first: targets for counterattack, waved_attack and
+// punish_town (towns).
+private _rebelPlaces = [];
+if (_places isNotEqualTo []) then {
+    private _rebelSide = missionNamespace getVariable ["teamPlayer", independent];
+    private _positions = _players apply { _x get "pos" };
+    _rebelPlaces = (_places select { (sidesX getVariable [_x, sideUnknown]) == _rebelSide }) apply {
+        private _marker = _x;
+        [selectMin ((_positions apply { round (markerPos _marker distance2D _x) }) + [1e6]), _marker]
+    };
+    _rebelPlaces sort true;
+    _rebelPlaces = (_rebelPlaces select [0, 12]) apply {
+        _x params ["_distance", "_marker"];
+        createHashMapFromArray [
+            ["place", [_marker] call AID_fnc_placeName], ["kind", [_marker] call AID_fnc_placeKind],
+            ["nearest_player", _distance]
+        ]
+    };
+};
+// The support types each enemy has, by the director's names (see AID_supportTypes).
+private _supportTypes = createHashMap;
+if (!isNil "A3A_supportTypesOcc") then {
+    {
+        _x params ["_name", "_types"];
+        _supportTypes set [_name, (keys AID_supportTypes) select { (AID_supportTypes get _x) in _types }];
+    } forEach [["occupants", A3A_supportTypesOcc], ["invaders", A3A_supportTypesInv]];
 };
 
 // Antistasi keeps the rebels' money and recruits on its "server" object.
@@ -100,6 +129,13 @@ private _state = createHashMapFromArray [
         // Antistasi task codes: AS, CON, DES, LOG, SUPP, RES, CONVOY, ...
         ["active_missions", missionNamespace getVariable ["A3A_activeTasks", []]],
         ["big_attack_in_progress", missionNamespace getVariable ["bigAttackInProgress", false]],
+        // Antistasi's own random events (antistasi_event): one at a time, and one Rivals event at a time.
+        ["random_event_running", missionNamespace getVariable ["isEventInProgress", false]],
+        ["rivals_active", !isNil "A3A_fnc_singleAttack" && { [] call AID_fnc_rivalsActive }],
+        ["rivals_event_running", missionNamespace getVariable ["isRivalEventInProgress", false]],
+        ["punishments_allowed", !isNil "A3A_fnc_invaderPunish" && { [] call AID_fnc_punishmentsAllowed }],
+        ["support_types", _supportTypes],
+        ["rebel_places", _rebelPlaces],
         ["locations_held", call {
             private _held = createHashMap;
             { private _owner = [sidesX getVariable [_x, sideUnknown]] call AID_fnc_sideName; _held set [_owner, (_held getOrDefault [_owner, 0]) + 1] } forEach _places;
@@ -120,7 +156,8 @@ private _state = createHashMapFromArray [
         ["units_alive", [] call AID_fnc_directorUnits],
         ["units_max", AID_maxDirectorUnits],
         ["personality", AID_personality],
-        ["protect_hq", AID_protectHQ]
+        ["protect_hq", AID_protectHQ],
+        ["cooldowns", AID_cooldowns]
     ]],
     // Standing facts from the host (!director note).
     ["host_notes", AID_notes]

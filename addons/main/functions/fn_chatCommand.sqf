@@ -11,6 +11,7 @@
         !director arc [idea | status | stop]  plan a story arc from the idea (or the director's own), show the
                                     running one, or stop it
         !director hq [off | director | all]   protection of the rebel HQ (see AID_fnc_init)
+        !director cooldowns [on | off]        the director's cooldowns (off: any action at any time)
         !director note <fact> | notes | notes clear   standing facts the director keeps in mind this session
         !director give rebels money|recruits <n>      resources at once, no cooldown (negative takes away)
         !director give occupants|invaders attack|defence <n>
@@ -125,6 +126,12 @@ switch (_command) do {
             format ["HQ protection: %1 (%2). Options: off, director, all.", AID_protectHQ, _meaning get AID_protectHQ]
                 call _reply;
         };
+        if ((toLower (_words param [1, ""])) == "cooldowns") exitWith {
+            private _choice = toLower (_words param [2, ""]);
+            if (_choice in ["on", "off"]) then { AID_cooldowns = _choice == "on" };
+            format ["Cooldowns: %1 (%2), from the next decision. Options: on, off.", ["off", "on"] select AID_cooldowns,
+                ["any action at any time", "each action waits its cooldown"] select AID_cooldowns] call _reply;
+        };
         if ((toLower (_words param [1, ""])) == "style") exitWith {
             private _choice = toLower (_words param [2, ""]);
             // Custom styles live in the companion's personalities.toml, so any one-word name is passed on; the
@@ -142,13 +149,14 @@ switch (_command) do {
         switch (toLower _rest) do {
             case "";
             case "help": {
-                "!director <what you want> | status | on | off | auto | propose | style <name> | hq <off/director/all> | arc [idea/status/stop] | note <fact> | notes [clear] | give <side> <what> <n> | aggression <side> <n> [min] | test [full]. !approve / !deny answer a proposal." call _reply;
+                "!director <what you want> | status | on | off | auto | propose | style <name> | hq <off/director/all> | cooldowns <on/off> | arc [idea/status/stop] | note <fact> | notes [clear] | give <side> <what> <n> | aggression <side> <n> [min] | test [full]. !approve / !deny answer a proposal." call _reply;
             };
             case "status": {
                 format [
-                    "%1, %2 mode, every %3 s, style %4, HQ protection %8. Director soldiers alive: %5 of %6. Proposal waiting: %7.",
+                    "%1, %2 mode, every %3 s, style %4, HQ protection %8, cooldowns %9. Director soldiers alive: %5 of %6. Proposal waiting: %7.",
                     ["off", "on"] select AID_enabled, AID_mode, AID_interval, _style,
-                    [] call AID_fnc_directorUnits, AID_maxDirectorUnits, ["no", "yes"] select !isNil "AID_pending", AID_protectHQ
+                    [] call AID_fnc_directorUnits, AID_maxDirectorUnits, ["no", "yes"] select !isNil "AID_pending", AID_protectHQ,
+                    ["off", "on"] select AID_cooldowns
                 ] call _reply;
             };
             case "on": { AID_enabled = true; "On." call _reply };

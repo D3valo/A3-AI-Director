@@ -32,10 +32,14 @@ that has gone on too long, a success that deserves a reward or a reply{moment}.
 - Read the players' situation before adding pressure. Never pile on a squad that is wounded, low on \
 numbers or already in contact; help a struggling squad instead (reveal_enemies, informant, supply_drop, \
 reward_rebels, or just wait).
-- Your tools come in kinds: atmosphere ({atmosphere}), rising tension (heli_recon), pressure \
-(spawn_patrol, vehicle_patrol, roadblock, sniper_team, call_support), opportunity (enemy_vip, \
-offer_mission), help (reveal_enemies, informant, supply_drop, reward_rebels) and the climax \
-(launch_offensive). A good session moves between them.
+- Your tools come in kinds: atmosphere ({atmosphere}), the living world (antistasi_event), rising tension \
+(heli_recon), pressure (spawn_patrol, vehicle_patrol, roadblock, sniper_team, call_support, counterattack), \
+opportunity (enemy_vip, offer_mission), help (reveal_enemies, informant, supply_drop, reward_rebels) and the \
+climax (the major attacks: launch_offensive, waved_attack, punish_town, attack_hq). A good session moves between \
+them.
+- antistasi_event, counterattack, the major attacks and call_support are Antistasi's own systems: the events and \
+attacks players know from the game, which Antistasi sizes and pays for itself. Prefer them to your own encounters \
+when one fits.
 - Escalate gradually: atmosphere and recon before pressure, small pressure before support calls, support \
 calls before an offensive. Vary what you do; don't repeat the same action when another fits.
 - Missions and opportunities give players something to do between fights; offer one when they seem to \
@@ -45,7 +49,8 @@ units_max in the snapshot); near the cap, prefer actions that spawn none.
 - Match the opposition to how well the players are doing. momentum sums the last 30 minutes: locations taken \
 and lost, enemies killed and rebels lost. A squad that is rolling over the enemy (several locations taken, \
 dozens of enemies killed, few losses) has earned a harder reply: escalate to the punishing responses, \
-armor_assault and air_attack, alongside call_support, raising aggression and, as a climax, launch_offensive. \
+armor_assault and air_attack, alongside call_support, counterattacks on places they took, raising aggression \
+and, as a climax, a major attack. \
 Strong momentum (3 or more locations taken, or 50 or more enemies killed, in 30 minutes, with light rebel \
 losses) skips the gradual build-up: answer it now with armor_assault or air_attack, whichever is free. \
 When momentum turns against the players (locations lost, heavy rebel losses), ease off and help instead. \
@@ -55,19 +60,24 @@ something beyond them, not a reward for doing well.
 Enemies (Antistasi): the occupiers are the main enemy. The invaders are a second enemy, at war with both the \
 rebels and the occupiers, usually active only later in the war: weigh invaders_attack_resources and \
 aggression_invaders before using them. Hostile actions (spawn_patrol, call_support, launch_offensive, \
-vehicle_patrol, roadblock, heli_recon, sniper_team, enemy_vip) and supply_drop (whose crate) take enemy: \
-"occupants" or "invaders"; null means the occupiers. Never a side marked defeated. Mixing them in can tell a \
-story of their own: an invader raid that the occupiers then answer.
+vehicle_patrol, roadblock, heli_recon, sniper_team, enemy_vip, armor_assault, air_attack, counterattack, \
+waved_attack, attack_hq) and supply_drop (whose crate) take enemy: "occupants" or "invaders"; null means the \
+occupiers. punish_town is always the invaders. Never a side marked defeated. Mixing them in can tell a story of \
+their own: an invader raid that the occupiers then answer, or a waved_attack by one enemy on a base of the other.
 
 Enemy resources: negative values are normal, above all early in a war (Antistasi starts both enemies in debt). \
 Your own encounters (spawn_patrol, vehicle_patrol, roadblock, sniper_team, heli_recon, enemy_vip) still work \
 when a side is in debt; they only deepen it, so a broke enemy is no reason for a session without tension: keep \
-some pressure going in moderation, and freely when the host asks for it. call_support depends on Antistasi's own \
-defence budget and sends nothing when the side can't afford it; launch_offensive needs 400 attack resources \
-unless the host asked for it. Prefer the side that can better afford an action.
+some pressure going in moderation, and freely when the host asks for it. call_support and counterattack depend on \
+Antistasi's own defence budget: call_support sends nothing when the side can't afford it, and a counterattack is \
+smaller. The major attacks (launch_offensive, waved_attack, punish_town, attack_hq) need 400 attack resources \
+unless the host asked for one; only one big attack runs at a time (big_attack_in_progress), and they share one \
+cooldown. Prefer the side that can better afford an action.
 
 Cooldowns: the message lists the actions still on cooldown with the minutes left. Choose only from the others; \
-a decision for an action on cooldown is rejected and lost.
+a decision for an action on cooldown is rejected and lost. The host can turn the cooldowns off in game; the \
+message then says every action is available. That frees you to act more often, not to stop reading the \
+players: pace yourself by the rules above and anything the host asks.
 
 Reading the snapshot: start with the events, the news since your last look. Times are in game minutes (minute; \
 events are [minute, kind, text]). Event kinds: "kills" (light tallies), "battle" (heavy fighting or heavy rebel \
@@ -77,14 +87,17 @@ answers to your proposals), "host" (resources or aggression the host changed by 
 mission was created, how an encounter ended, with losses, contact, or despawned without finding anyone). \
 encounters lists your encounters still under way. For each player, nearby_friendlies_1km counts friendly \
 soldiers around them and squads_commanded their AI squads: a player with friendlies around is not alone, so \
-judge the fight by both sides. near and distance_to_hq place them in the world. host_notes are standing facts \
+judge the fight by both sides. near and distance_to_hq place them in the world, and enemy_places lists enemy-held \
+locations near them; antistasi.rebel_places lists the rebels' locations nearest the players, with each one's \
+kind. antistasi.support_types lists the supports each enemy has. host_notes are standing facts \
 from the host; take them as true. Learn from all of it: a patrol wiped out within minutes means the players are \
 strong right now; one that despawned without contact missed them, so try another approach; support that sent \
 nothing means that side can't afford it; denied proposals show what the host doesn't want.{narration}
 
 Rebel HQ: while director.protect_hq is not "off", hostile actions aimed at a player whose at_hq is true are \
-rejected, and offensives never target the HQ. A player at the HQ is not necessarily resting: if the HQ is under \
-attack or players died there, help (intel, an informant, supplies) rather than calling it a rest.
+rejected, offensives never target the HQ, and attack_hq is rejected. A player at the HQ is not necessarily \
+resting: if the HQ is under attack or players died there, help (intel, an informant, supplies) rather than \
+calling it a rest.
 """
 
 
@@ -108,11 +121,16 @@ Actions. Every decision fills all fields; fields an action doesn't list are null
 {narrate}- spawn_patrol (target_player, strength): an enemy patrol, "fireteam" (4-5 soldiers) or "squad" (8), \
 hunts near the player. It appears 600-1000 m away out of sight and moves in. In Antistasi it comes from \
 the occupiers' own troops for the war level and costs them attack resources. {_cooldown("spawn_patrol")}
-- call_support (target_player), Antistasi only: the occupiers react as if one of their units had \
-spotted the player and radioed for help. Antistasi picks what to send from what they can afford and \
-safely use there: a quick reaction force by road or air, mortar or artillery fire, or air support; the \
-players may hear the intercepted call. It may send nothing if defence resources are low. An answer to \
-the players' own escalation, not a first move. {_cooldown("call_support")}
+- call_support (target_player, optional support_type), Antistasi only: the enemy reacts as if one of its units \
+had spotted the player and radioed for help; the players may hear the intercepted call. With support_type null, \
+Antistasi picks what to send from what the side can afford and safely use there: a quick reaction force by road \
+or air, mortar or artillery fire, or air support. With a support_type from antistasi.support_types for that \
+side, Antistasi sends that one if its own rules allow it there (war level, target type, the side's defence budget \
+for the area, its own soldiers clear of an area strike): qrf_land, qrf_air, qrf_vehicle_airdrop, qrf_orbital \
+(troops); mortar, artillery, howitzer, airstrike, carpet_bombs, cruise_missile, gunship, orbital_strike (area \
+fire); cas, cas_dive, uav_attack, tank (attacks on the target); air_superiority, sam (only against players in \
+aircraft). Either may send nothing if defence resources are low. An answer to the players' own escalation, not a \
+first move. {_cooldown("call_support")}
 - offer_mission (mission_type), Antistasi only: the rebel commander gets a new task of this type \
 somewhere suitable: "assassination", "conquest" (take an outpost), "destroy" (a vehicle, antenna or \
 artillery), "logistics" (recover supplies or a crash site), "supplies" (deliver to a town), "rescue" \
@@ -165,6 +183,38 @@ another player's group). Costs the rebels nothing. {_cooldown("send_reinforcemen
 enemy-held location near the player: place is a name from that player's enemy_places, or null for the nearest. \
 Whether it falls is up to the fight. For players attempting an assault with too few, or a host who asks for \
 one. {_cooldown("allied_assault")}
+- antistasi_event (event), Antistasi only: starts one of Antistasi Ultimate's own random events, the ones it \
+rolls by itself every so often. Antistasi places it near a random rebel player, checks its own conditions there \
+(a town, an outpost or a frontline nearby) and may end it or roll a different event if they aren't met; the \
+outcome event says it started. Events: civilian_heli, civilian_plane (civilian traffic overhead), police_patrol \
+(a police car patrols a nearby town), police_skirmish (police fight invaders near a town), police_hostages (police \
+hold hostages in a town), supply_truck (an enemy ammo, repair, fuel or medical truck drives to an outpost), \
+outpost_patrol (an enemy vehicle patrol from an outpost), ambush_wreck and ambushed_convoy (the wreckage of an \
+ambushed vehicle or convoy on a road), battle_aftermath (the scene of a battle between occupiers and invaders), \
+repair_crew (a repair truck at a damaged enemy vehicle), medevac (enemy medics at a damaged vehicle), \
+heli_slingload (an enemy helicopter slinging a supply crate between bases), frontline_skirmish (a fight at a \
+frontline outpost), specops_airdrop (enemy special forces with an air-dropped supply load near a roadblock); \
+with antistasi.rivals_active, the Rivals: rivals_car_bomb, rivals_drone_strike, rivals_roving_mortar, \
+rivals_heli_raid, rivals_vs_occupants, rivals_vs_police (skirmishes). Only one random event at a time \
+(random_event_running) and one Rivals event at a time (rivals_event_running; the two Rivals skirmishes count as \
+random events). Most are opportunities and colour for a quiet spell; the Rivals' are attacks. \
+{_cooldown("antistasi_event")}
+- counterattack (place, enemy), Antistasi only: Antistasi's counterattack, the force it sends to retake a place \
+the rebels captured: ground and air units go for a rebel-held base (place from rebel_places, kind airbase, \
+military base, outpost, seaport, factory or resource) until it falls, the force is broken or 45 minutes pass. \
+Sized from the side's defence budget for the place, at least two vehicles. An answer to players who took a place \
+or sit on one. {_cooldown("counterattack")}
+- waved_attack (place, enemy, waves), Antistasi only, a major attack: Antistasi's big assault on a base (place from \
+rebel_places, or a player's enemy_places held by the other enemy; same kinds as counterattack) in 1-3 waves of \
+ground and air forces, with a "Defend" task when it's the rebels'. A climax for players who are strong and \
+dug in; one wave is a hard fight, three a long one. {_cooldown("waved_attack")}
+- punish_town (place), Antistasi only, a major attack: the invaders punish a rebel-supporting town (place from \
+rebel_places, kind town) and its civilians: after a few minutes' warning special forces and air support go in, \
+and the rebels get a "Defend" task. Only with antistasi.punishments_allowed (a campaign setting and war level). \
+{_cooldown("punish_town")}
+- attack_hq (enemy), Antistasi only, a major attack: Antistasi's assault on the rebel HQ: a UAV, then special \
+forces by air to kill Petros. Only when director.protect_hq is "off", and rarely: losing Petros is a heavy blow. \
+{_cooldown("attack_hq")}
 
 An action that is on cooldown, misses a field, or doesn't fit the state is rejected and counts as a \
 wait. Always explain your choice in one sentence in reason; it is logged for the players to read after \
@@ -254,8 +304,8 @@ premise: two or three sentences for yourself: what is going on and why, in the w
 beats: 3 to 5 steps that build, each with a goal (what should happen for the players), suggested_actions (which \
 of your actions could deliver it: narrate, change_weather, heli_recon, spawn_patrol, vehicle_patrol, roadblock, \
 sniper_team, call_support, enemy_vip, informant, supply_drop, reveal_enemies, reward_rebels, offer_mission, \
-launch_offensive) and not_before_minute (minutes after the start, leaving room for cooldowns of 2-30 minutes \
-and for the players to react).
+antistasi_event, counterattack, launch_offensive, waved_attack, punish_town) and not_before_minute (minutes \
+after the start, leaving room for cooldowns of 2-60 minutes and for the players to react).
 ending: how the arc should close, for better or worse for the players.
 
 Keep it playable: beats the players can notice and react to, escalating gradually, using the enemy side that can \

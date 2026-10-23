@@ -2,7 +2,7 @@
 
 A server-side game master for Arma 3, driven by Claude. Every 90 seconds the server sends a summary of the game
 state to a companion program running on the same PC. The companion asks Claude for one decision (wait, narrate,
-send a patrol, or have Antistasi call in support), checks it against an allow-list and a cooldown budget, and the
+send a patrol, start one of Antistasi's own events or attacks, or have Antistasi call in support), checks it against an allow-list and a cooldown budget, and the
 mod carries it out.
 
 | Action | Effect | Cooldown |
@@ -10,9 +10,9 @@ mod carries it out.
 | `wait` | Nothing (the usual answer) | - |
 | `narrate` | A line of atmosphere shown to all players as a hint | 2 min |
 | `spawn_patrol` | A fireteam or squad hunting a player, from out of sight 600-1000 m away | 10 min |
-| `call_support` | Antistasi only: the occupiers react as if they had spotted a player and radioed for help; Antistasi's own support logic sends a QRF, artillery, air support or nothing, paid from their defence resources | 15 min |
+| `call_support` | Antistasi only: the enemy reacts as if it had spotted a player and radioed for help; Antistasi's own support logic sends a QRF, artillery, air support or nothing, paid from its defence resources. With a `support_type` (one the side has: QRFs, mortar, artillery, airstrike, CAS, gunship, tank, cruise missile, ...), Antistasi sends that one if its own rules allow it there (war level, target type, defence budget, own troops clear) | 15 min |
 | `offer_mission` | Antistasi only: a new rebel task through Antistasi's mission request (assassination, conquest, destroy, logistics, supplies, rescue, convoy); not a type already active | 20 min |
-| `launch_offensive` | Antistasi only: a major attack chosen by Antistasi (`A3A_fnc_chooseAttack`), possibly on the HQ; needs 400+ attack resources and no big attack in progress | 60 min |
+| `launch_offensive` | Antistasi only, major attack: chosen by Antistasi (`A3A_fnc_chooseAttack`), possibly on the HQ; needs 400+ attack resources and no big attack in progress | 60 min, shared |
 | `reveal_enemies` | Enemy groups within 1.5 km of a player marked on every map for 5 minutes | 10 min |
 | `reward_rebels` | Antistasi only: small (300 money, 1 recruit) or large (1000 money, 3 recruits) donation | 30 min |
 | `change_weather` | Clear, overcast, rain, storm or fog, over 5 minutes | 20 min |
@@ -28,10 +28,26 @@ mod carries it out.
 | `change_aggression` | Antistasi only: raise or lower a side's aggression by 20 for 30 minutes; Antistasi's own attacks and supports follow it | 20 min |
 | `send_reinforcements` | Antistasi only, friendly: a rebel fireteam or squad joins a player (high command for the commander) | 20 min |
 | `allied_assault` | Antistasi only, friendly: a rebel fireteam or squad attacks an enemy-held location near a player (named, or the nearest) | 30 min |
+| `antistasi_event` | Antistasi only: one of Antistasi Ultimate's own random events (police patrol, police hostages, frontline skirmish, medevac, heli slingload, special forces airdrop, ... and the Rivals' car bomb, drone strike, roving mortar, heli raid, skirmishes). Antistasi places it near a random rebel player and may end it or roll another if it doesn't fit; one at a time, as Antistasi runs them | 15 min |
+| `counterattack` | Antistasi only: Antistasi's counterattack (`A3A_fnc_singleAttack`) on a named rebel-held base, sized from the side's defence budget (2-6 vehicles) | 30 min |
+| `waved_attack` | Antistasi only, major attack: Antistasi's waved assault (`A3A_fnc_wavedAttack`) on a named base of the rebels or the other enemy, 1-3 waves, with a Defend task | 60 min, shared |
+| `punish_town` | Antistasi only, major attack: the invaders punish a named rebel town (`A3A_fnc_invaderPunish`); only where the campaign allows punishments | 60 min, shared |
+| `attack_hq` | Antistasi only, major attack: Antistasi's assault on the rebel HQ (`A3A_fnc_attackHQ`); only with HQ protection `off` | 60 min, shared |
 
 Encounters are built from the enemy side's Antistasi templates for the war level, spawned out of players' sight, set
 up with Antistasi's own unit and vehicle functions, paid for from its attack resources, and despawned by Antistasi
 once no rebels are near. Those that spawn soldiers count against `AID_maxDirectorUnits`.
+
+**Antistasi's own systems.** `antistasi_event`, `counterattack`, the major attacks (`launch_offensive`,
+`waved_attack`, `punish_town`, `attack_hq`) and `call_support` start Antistasi Ultimate's own events, attacks and
+supports, which it sizes and pays for itself, with its own tasks and notifications. The major attacks cost 400 attack
+resources up front (unless the host asked for one), run one at a time and share a cooldown. Targets are named from
+the state: `rebel_places` (the rebels' locations nearest the players, with their kind) and each player's
+`enemy_places`.
+
+**Cooldowns.** `!director cooldowns off` (or `AID_cooldowns = false`) lets the director use any action at any time
+from the next decision; `on` restores them. Actions used meanwhile still start their cooldowns. Antistasi's own
+limits stay: one random event at a time, one big attack at a time.
 
 **Which enemy.** Claude chooses, per hostile action, whether the occupiers or the invaders (Antistasi's second enemy)
 carry it out, spending that side's resources and never a defeated side. The default is the occupiers, or
@@ -181,6 +197,7 @@ and players whose Steam UID is in `AID_chatUIDs` can use them; replies go to the
 | `!director auto` / `!director propose` | Run decisions at once, or wait for `!approve` |
 | `!director style <name>` | Change the director's style for this session: a built-in or custom style, or `default` (the campaign's own). If the companion doesn't know the name, it says so and keeps the campaign's. `!director style` shows the current one |
 | `!director hq off` / `director` / `all` | HQ protection (see Rebel HQ above); `!director hq` shows it |
+| `!director cooldowns off` / `on` | Turn the director's cooldowns off (any action at any time) or back on; `!director cooldowns` shows the setting |
 | `!director give rebels money <n>` / `give rebels recruits <n>` | Give the rebels money or recruits at once, no cooldown (a negative number takes away) |
 | `!director give occupants attack <n>` / `give invaders defence <n>` | Give an enemy side attack or defence resources at once, no cooldown (negative takes away) |
 | `!director aggression occupants <points> [minutes]` | Change an enemy side's aggression, e.g. `!director aggression invaders 30` or `-20` (default 30 minutes) |
@@ -203,6 +220,7 @@ Players don't need the mod: the server sends the chat hook to every client, incl
 | `[] call AID_fnc_approve` | Run the proposed decision |
 | `AID_request = "send a patrol at us"` | Ask the director for something in plain words. Sent at once; the companion keeps it until a decision carries it out (cooldowns still apply) or Claude says it can't be done with the available actions |
 | `AID_interval = 60` | Seconds between states |
+| `AID_cooldowns = false` | The director's cooldowns off (default `true`) |
 | `AID_patrolSide = Invaders` | Side for hostile actions when Claude doesn't choose one (default: Antistasi's `Occupants`, or `east` outside Antistasi) |
 | `AID_patrolUnits` | Unit classes for patrols outside Antistasi (default: vanilla CSAT riflemen) |
 

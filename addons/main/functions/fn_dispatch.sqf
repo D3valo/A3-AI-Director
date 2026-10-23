@@ -29,7 +29,7 @@ switch (_action) do {
         if (_message != "") then { [_message select [0, 200]] remoteExec ["hint", 0] };
     };
     case "spawn_patrol": { [_target, "strength" call _optional, _enemy] spawn AID_fnc_spawnPatrol };
-    case "call_support": { [_target, _enemy] spawn AID_fnc_callSupport };
+    case "call_support": { [_target, _enemy, "support_type" call _optional] spawn AID_fnc_callSupport };
     case "offer_mission": { ["mission_type" call _optional] spawn AID_fnc_offerMission };
     case "launch_offensive": { [_enemy] spawn AID_fnc_launchOffensive };
     case "reveal_enemies": { [_target] spawn AID_fnc_revealEnemies };
@@ -50,6 +50,15 @@ switch (_action) do {
         // raise: +20 for 30 minutes; lower: -20.
         [_enemy, [-20, 20] select (("aggression" call _optional) == "raise"), 30] call AID_fnc_changeAggression;
     };
+    case "antistasi_event": { ["event" call _optional] spawn AID_fnc_antistasiEvent };
+    case "counterattack": { ["place" call _optional, _enemy] spawn AID_fnc_counterattack };
+    case "waved_attack": {
+        private _waves = _decision getOrDefault ["waves", 2];
+        if (isNil "_waves" || { !(_waves isEqualType 0) }) then { _waves = 2 };
+        ["place" call _optional, _enemy, _waves] spawn AID_fnc_wavedAttack;
+    };
+    case "punish_town": { ["place" call _optional] spawn AID_fnc_punishTown };
+    case "attack_hq": { [_enemy] spawn AID_fnc_attackHQ };
     default {
         diag_log format ["[AI Director] Ignoring unknown action: %1", _decision];
     };
