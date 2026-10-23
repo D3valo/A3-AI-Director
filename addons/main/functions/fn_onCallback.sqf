@@ -34,6 +34,7 @@ private _news = switch (_arc getOrDefault ["event", ""]) do {
     case "completed": { format ["Story arc complete: ""%1"".", _title] };
     case "stopped": { format ["Story arc stopped: ""%1"".", _title] };
     case "failed": { "The companion couldn't plan a story arc; see its window." };
+    case "off": { "Story arcs are off: the companion was started with narrative off (--no-narrative)." };
     default { "" };
 };
 if (_news != "") then { [format ["[Director] %1", _news]] remoteExec ["systemChat", AID_arcOwner] };

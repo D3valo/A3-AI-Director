@@ -141,6 +141,7 @@ Options before the command apply to all commands; `--max-skip` and `--no-report`
 | `--personalities <file>` | `companion\personalities.toml` | Custom styles |
 | `--backend <name>` | `claude-code` | `claude-code`, `api` or `offline` |
 | `--effort <level>` | `low` | `low`, `medium` or `high` thinking for decisions |
+| `--no-narrative` | off | Only decisions that change the game: no `narrate`, informants say a stock line, no campaign story in the prompt, `!director arc` is refused (a saved arc waits for a session with narrative), and `serve` writes no report on Ctrl+C. Smaller prompts and no extra Claude calls. `start-session.cmd -NoNarrative` passes it on. Not remembered for the campaign |
 | `serve --max-skip <s>` | `300` | While nothing important changes (no deaths, big damage, change in nearby enemies, movement of a few hundred metres, mission or war-level change, time of day), wait without asking Claude, for up to this many seconds. `0` asks every time. Saves usage in quiet spells and long fights |
 | `serve --no-report` | off | Don't write the report and story on Ctrl+C |
 
@@ -242,7 +243,8 @@ current beat, through the normal actions, cooldowns and limits; a decision that 
 player who started it hears the arc's news (begins, complete, stopped), so the plot isn't spoiled for the others.
 `!director arc status` shows the beat; `!director arc stop` ends it; a new arc replaces the running one. The running
 arc is saved in `campaigns\<name>\arc.json`, so it survives a companion restart, and the after-action report covers
-it. While an arc runs, the director asks Claude every time instead of skipping quiet moments.
+it. While an arc runs, the director asks Claude every time instead of skipping quiet moments. With `--no-narrative`
+there are no arcs.
 
 ## Prompt caching
 

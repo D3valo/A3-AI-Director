@@ -15,7 +15,7 @@ from pydantic import ValidationError
 from . import personalities
 from .arcs import ARC_SCHEMA, Arc, ArcPlan
 from .backends import Backend
-from .catalogue import DECISION_SCHEMA, MAX_REQUEST_CHARS, Budget, Decision, check
+from .catalogue import MAX_REQUEST_CHARS, Budget, Decision, check, decision_schema
 from .pacing import Pacer, has_news
 from .prompt import ARC_PROMPT, system_prompt
 
@@ -44,11 +44,15 @@ class Director:
         max_skip: float = 0,
         styles: dict[str, str] | None = None,
         arc_path: Path | None = None,
+        narrative: bool = True,
     ) -> None:
         self.backend = backend
         self.effort = effort
+        # False (--no-narrative): only decisions that change the game. No narrate, no informant lines, no campaign
+        # story and no story arcs; the arc in arc.json is left alone for a later session with narrative.
+        self.narrative = narrative
         # The campaign's story so far, read once per session.
-        self.story = story
+        self.story = story if narrative else None
         # The session's style, unless the game asks for another (!director style ...).
         self.styles = styles if styles is not None else dict(personalities.BUILT_IN)
         self.personality = personality
@@ -66,7 +70,7 @@ class Director:
         # The active story arc (kept in the campaign so it survives a restart), and what happened to it in the
         # current decision ("started", "completed", "stopped", "failed" or ""), reported back to the game.
         self.arc_path = arc_path
-        self.arc = Arc.load(arc_path) if arc_path else None
+        self.arc = Arc.load(arc_path) if arc_path and narrative else None
         self.arc_event = ""
         # An arc that ended in the current decision, still reported under its title.
         self.ended_arc: Arc | None = None
@@ -107,7 +111,9 @@ class Director:
             self.unseen_events = []
             proposed, usage = self._ask(state, personality)
             self.pacer.asked(state)
-            decision = check(proposed, state, self.budget, host_request=self.request is not None)
+            decision = check(
+                proposed, state, self.budget, host_request=self.request is not None, narrative=self.narrative
+            )
             self.request_news = self._request_news(request, proposed, decision)
             if self.request and decision.request_done:
                 log.info("Request done: %s", self.request["text"])
@@ -144,6 +150,10 @@ class Director:
         return ""
 
     def _handle_arc_request(self, arc_request: dict, state: dict) -> None:
+        if not self.narrative:
+            log.info("Story arc request ignored: narrative is off")
+            self.arc_event = "off"
+            return
         if arc_request.get("stop"):
             if self.arc:
                 log.info("Story arc stopped: %s", self.arc.title)
@@ -208,7 +218,8 @@ class Director:
 
     def _ask(self, state: dict, personality: str) -> tuple[Decision, dict | None]:
         answer = self.backend.structured(
-            self._system(personality), self._message(state), DECISION_SCHEMA, self.effort, DECISION_TIMEOUT_SECONDS
+            self._system(personality), self._message(state), decision_schema(self.narrative), self.effort,
+            DECISION_TIMEOUT_SECONDS,
         )
         if answer.data is None:
             return Decision.wait(answer.error or "no answer"), answer.usage
@@ -221,7 +232,7 @@ class Director:
     def _system(self, personality: str) -> list[str]:
         """The parts that stay the same for the whole session (so the API backend can cache them): the rules
         with the style, and the campaign's story so far."""
-        blocks = [system_prompt(self.styles[personality])]
+        blocks = [system_prompt(self.styles[personality], self.narrative)]
         if self.story:
             blocks.append(f"Campaign story so far, from earlier sessions:\n{self.story}")
         return blocks
@@ -239,12 +250,10 @@ class Director:
             "Pending player request:",
             json.dumps(self.request, sort_keys=True) if self.request else "none",
             "",
-            "Active story arc:",
-            self.arc.describe(state.get("time", 0)) if self.arc else "none",
-            "",
-            "Current state:",
-            json.dumps(view, sort_keys=True),
         ]
+        if self.narrative:
+            parts += ["Active story arc:", self.arc.describe(state.get("time", 0)) if self.arc else "none", ""]
+        parts += ["Current state:", json.dumps(view, sort_keys=True)]
         return "\n".join(parts)
 
     def _record(

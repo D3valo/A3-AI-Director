@@ -8,12 +8,16 @@
     means BattlEye is off, which the director's extension needs. Host the game from the Multiplayer menu as usual;
     the other players join with the same preset in the launcher and need nothing else.
 
-    When the session ends, press Ctrl+C in the companion window to write the after-action report.
+    When the session ends, press Ctrl+C in the companion window to write the after-action report (not with
+    -NoNarrative).
 .PARAMETER Campaign
     The companion's campaign (logs, reports, story so far). Default: infinizo
 .PARAMETER Personality
     The director's style: balanced, cinematic, merciless, supportive or one from companion\personalities.toml.
     Remembered for the campaign; leave it out to use the campaign's.
+.PARAMETER NoNarrative
+    Only decisions that change the game: no narrate lines, no informant lines, no campaign story, no story arcs and
+    no after-action report at the end. Fewer and smaller Claude calls.
 .PARAMETER Preset
     The launcher preset export. Default: .hemtt\presets\infinizo.html
 .PARAMETER ModDir
@@ -26,6 +30,7 @@
 param(
     [string]$Campaign = 'infinizo',
     [string]$Personality = '',
+    [switch]$NoNarrative,
     [string]$Preset = '.hemtt\presets\infinizo.html',
     [string]$ModDir = 'install\@AIDirector',
     [switch]$NoGame,
@@ -58,10 +63,11 @@ if (-not $NoGame) {
     $mods = @($ids | ForEach-Object { Join-Path $workshop $_ }) + $ModDir
 }
 
-$style = ''
-if ($Personality) { $style = "--personality $Personality " }
+$options = ''
+if ($Personality) { $options += "--personality $Personality " }
+if ($NoNarrative) { $options += '--no-narrative ' }
 $serve = "Set-Location '$companion'; `$host.UI.RawUI.WindowTitle = 'AI Director ($Campaign)'; " +
-    "& .\.venv\Scripts\python.exe -m director --campaign $Campaign $($style)serve"
+    "& .\.venv\Scripts\python.exe -m director --campaign $Campaign $($options)serve"
 # Windows PowerShell's Start-Process joins arguments with spaces and doesn't quote them, so quote -mod here.
 $arguments = @('-noSplash', '-skipIntro', '-world=empty', "`"-mod=$($mods -join ';')`"")
 

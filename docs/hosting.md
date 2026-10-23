@@ -16,7 +16,7 @@ tools\install.cmd          # tests, builds and installs the mod to install\@AIDi
 **Each session** (from any terminal, or double-click the `.cmd` in Explorer):
 
 ```powershell
-tools\start-session.cmd                          # -Personality <style> (remembered), -Campaign <name>, -DryRun
+tools\start-session.cmd                          # -Personality <style> (remembered), -Campaign <name>, -NoNarrative, -DryRun
 ```
 
 It checks that every mod in the preset is downloaded, opens the companion in its own window (campaign

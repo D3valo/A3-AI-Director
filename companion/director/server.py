@@ -52,7 +52,10 @@ def serve(director: Director, port: int) -> None:
 
     # Loopback only: the companion holds the API key and must not be reachable from the network.
     server = ThreadingHTTPServer(("127.0.0.1", port), Handler)
-    log.info("Listening on http://127.0.0.1:%d (backend %s, log %s)", port, director.backend.name, director.log_path)
+    log.info(
+        "Listening on http://127.0.0.1:%d (backend %s, narrative %s, log %s)",
+        port, director.backend.name, "on" if director.narrative else "off", director.log_path,
+    )
     try:
         server.serve_forever()
     except KeyboardInterrupt:

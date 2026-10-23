@@ -10,6 +10,8 @@ Each campaign (--campaign, default "default") keeps its logs, reports and story 
 campaigns/<name>/. Styles (--personality): balanced, cinematic, merciless, supportive, plus any in
 personalities.toml; serve remembers the style for the campaign, so later sessions can leave it out.
 While nothing important changes, serve waits without asking Claude for up to --max-skip seconds.
+--no-narrative keeps Claude to decisions that change the game: no narrate, no informant lines, no campaign
+story, no story arcs, and serve writes no report (the report command still can).
 Backends (--backend): claude-code (default) runs the local `claude` CLI on your
 Claude subscription, for your own games only; api uses an Anthropic API key; offline always waits.
 """
@@ -40,6 +42,10 @@ def main() -> None:
         help="the director's style (default: the campaign's, else balanced); !director style changes it in game",
     )
     parser.add_argument("--personalities", type=Path, default=PERSONALITIES_FILE, help="file with custom styles")
+    parser.add_argument(
+        "--no-narrative", dest="narrative", action="store_false",
+        help="only decisions that change the game: no narrate, informant lines, campaign story, story arcs or report",
+    )
     parser.add_argument("--campaign", default="default")
     parser.add_argument("--campaigns-dir", type=Path, default=CAMPAIGNS_DIR, help="where campaigns are kept")
     commands = parser.add_subparsers(dest="command", required=True)
@@ -69,10 +75,12 @@ def main() -> None:
         case "serve":
             director = Director(
                 backend, campaign.logs_dir, args.effort, campaign.story(), personality, args.max_skip, styles,
-                campaign.arc_path,
+                campaign.arc_path, args.narrative,
             )
             serve(director, args.port)
-            if not args.no_report and director.log_path.exists():
+            if not args.narrative and director.log_path.exists():
+                print("Narrative is off, so no report. Run `python -m director report` later if you want one.")
+            elif not args.no_report and director.log_path.exists():
                 print("Writing the session report; press Ctrl+C again to skip.")
                 try:
                     campaign.write_report(director.log_path, backend)
@@ -80,7 +88,8 @@ def main() -> None:
                     print("Skipped. Run `python -m director report` later to write it.")
         case "decide":
             director = Director(
-                backend, campaign.logs_dir, args.effort, campaign.story(), personality, styles=styles
+                backend, campaign.logs_dir, args.effort, campaign.story(), personality, styles=styles,
+                narrative=args.narrative,
             )
             state = json.loads(args.state.read_text(encoding="utf-8"))
             print(director.decide(state).model_dump_json(indent=2))

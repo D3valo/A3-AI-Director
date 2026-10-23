@@ -149,6 +149,18 @@ DECISION_SCHEMA = {
     "additionalProperties": False,
 }
 
+# Actions that only tell a story; with narrative off (--no-narrative) the director can't choose them.
+NARRATIVE_ACTIONS = frozenset({"narrate"})
+
+
+def decision_schema(narrative: bool = True) -> dict:
+    """DECISION_SCHEMA, without the actions that only tell a story when `narrative` is off."""
+    if narrative:
+        return DECISION_SCHEMA
+    actions = [name for name in ACTIONS if name not in NARRATIVE_ACTIONS]
+    return {**DECISION_SCHEMA, "properties": {**DECISION_SCHEMA["properties"], "action": {"type": "string", "enum": actions}}}
+
+
 MAX_MESSAGE_CHARS = 200
 MAX_REQUEST_CHARS = 300
 # Actions that also start another's cooldown: the informant's intel marks the same enemies reveal_enemies does.
@@ -176,14 +188,22 @@ class Budget:
         return {name: left for name in COOLDOWN_SECONDS if (left := self.remaining(name)) > 0}
 
 
-def check(decision: Decision, state: dict, budget: Budget, host_request: bool = False) -> Decision:
+def check(
+    decision: Decision, state: dict, budget: Budget, host_request: bool = False, narrative: bool = True
+) -> Decision:
     """Returns the decision if it may run, otherwise a `wait` that records why it was dropped. With a host request
-    pending, an offensive may push its side into debt."""
-    problem = _problem(decision, state, budget, host_request)
+    pending, an offensive may push its side into debt. With narrative off, actions that only tell a story are
+    rejected and an informant says its stock line."""
+    if not narrative and decision.action in NARRATIVE_ACTIONS:
+        problem = "narrative is off"
+    else:
+        problem = _problem(decision, state, budget, host_request)
     if problem:
         return Decision.wait(f"rejected {decision.action}: {problem} (Claude's reason: {decision.reason})")
     if decision.action != "wait":
         budget.spend(decision.action)
+    if not narrative and decision.message is not None:
+        decision = decision.model_copy(update={"message": None})
     return decision
 
 
