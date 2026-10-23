@@ -99,7 +99,7 @@ addons/main (SQF)                   companion/director
 ## Requirements
 
 - Rust (stable, `x86_64-pc-windows-msvc`) with Visual Studio's MSVC build tools
-- HEMTT (`hemtt`)
+- HEMTT, on PATH or set as `Hemtt` in `tools\local-settings.psd1` (see Setup)
 - Python 3.13
 - Arma 3 2.20 or later (native `toJSON` / `fromJSON`)
 - One of the companion backends:
@@ -117,6 +117,10 @@ cd companion
 python -m venv .venv
 .venv\Scripts\python -m pip install -r requirements.txt
 ```
+
+Paths that differ between PCs (HEMTT, where the built mod is installed) go in `tools\local-settings.psd1`, which
+isn't in git: copy `tools\local-settings.example.psd1` and fill in what you need. Without it, `hemtt` comes from PATH
+and the mod is installed to `install\@AIDirector` in the repo.
 
 ## Build and test
 

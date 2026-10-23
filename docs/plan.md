@@ -89,7 +89,7 @@ about the local game, not a long-running agent with a workspace.
 | Custom and per-campaign styles | Built, unit tests; not in game |
 | Seven more encounters | Built, chosen sensibly by Claude in sample scenarios; not in game |
 | Enemy side choice, HQ protection, API prompt caching, story arcs | Built; arcs planned live by Claude; not in game |
-| Outcome feedback | Tested in game (2026-10-22, about 80 minutes on the Infinizo mod list) |
+| Outcome feedback | Tested in game (2026-10-22, about 80 minutes on the group's mod list) |
 | First in-game session | Every action and the chat commands (story arcs not tried yet); full self-test 19 passed, 1 warning (no offensive affordable); 24 issues found and fixed (cooldowns shown to Claude, friendly forces, request news in chat, setup gate, supply drop height, unique place names, mission results, pacing in battles, self-test accuracy and more) |
 | Friendly forces, aggression, host resources, punishing responses | Built: send_reinforcements, allied_assault, change_aggression, armor_assault, air_attack, momentum, `!director give` and `!director aggression`; chosen sensibly by Claude in sample scenarios; not in game |
 | Narrative off (`--no-narrative`) | Built, unit tests, one live decision; not in game |
@@ -99,7 +99,7 @@ about the local game, not a long-running agent with a workspace.
 
 1. **Test session (tooling done):** an end-to-end test without Arma (`tools/e2e_test.py`, passing) and an in-game
    self-test (`!director test`); the in-game session itself is still to do ([testing.md](testing.md)).
-2. **Real game setup (done):** `tools/install.ps1` installs the mod to `install\@AIDirector`, and
+2. **Real game setup (done):** `tools/install.ps1` installs the mod to a fixed folder (`ModDir`), and
    `tools/start-session.ps1` starts the companion and Arma with the group's 146 mods, BattlEye off ([hosting.md](hosting.md)).
    Sessions start on the host's own PC; hosting.md also covers a later dedicated server.
 3. **Outcome feedback (done):** outcomes of the director's actions, its encounters under way, events since the last

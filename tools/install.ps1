@@ -5,11 +5,13 @@
     Real sessions load the mod from this folder (tools\start-session.ps1 does, or add it once in the Arma 3
     Launcher as a local mod). Run it again after pulling changes. Arma must be closed, as it locks the DLL.
 .PARAMETER Destination
-    The mod folder. Default: install\@AIDirector
+    The mod folder. Default: ModDir from tools\local-settings.psd1, else install\@AIDirector in the repo.
 #>
-param([string]$Destination = 'install\@AIDirector')
+param([string]$Destination = '')
 
 $root = Split-Path $PSScriptRoot -Parent
+. (Join-Path $PSScriptRoot 'LocalSettings.ps1')
+if (-not $Destination) { $Destination = Get-LocalSetting 'ModDir' (Join-Path $root 'install\@AIDirector') }
 
 & (Join-Path $PSScriptRoot 'build.ps1')
 if (-not $?) { throw 'build failed' }

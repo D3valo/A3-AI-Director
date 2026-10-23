@@ -19,9 +19,11 @@
     Only decisions that change the game: no narrate lines, no informant lines, no campaign story, no story arcs and
     no after-action report at the end. Fewer and smaller Claude calls.
 .PARAMETER Preset
-    The launcher preset export. Default: .hemtt\presets\infinizo.html
+    The launcher preset export. Default: .hemtt\presets\infinizo.html in the repo (the group's list, also used by
+    `hemtt launch infinizo`).
 .PARAMETER ModDir
-    The installed director mod. Default: install\@AIDirector
+    The installed director mod. Default: ModDir from tools\local-settings.psd1, else install\@AIDirector in the
+    repo (where tools\install.ps1 puts it).
 .PARAMETER NoGame
     Start only the companion (for example when Arma is already running).
 .PARAMETER DryRun
@@ -31,8 +33,8 @@ param(
     [string]$Campaign = 'infinizo',
     [string]$Personality = '',
     [switch]$NoNarrative,
-    [string]$Preset = '.hemtt\presets\infinizo.html',
-    [string]$ModDir = 'install\@AIDirector',
+    [string]$Preset = '',
+    [string]$ModDir = '',
     [switch]$NoGame,
     [switch]$DryRun
 )
@@ -40,6 +42,9 @@ param(
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
 $companion = Join-Path $root 'companion'
+. (Join-Path $PSScriptRoot 'LocalSettings.ps1')
+if (-not $Preset) { $Preset = Join-Path $root '.hemtt\presets\infinizo.html' }
+if (-not $ModDir) { $ModDir = Get-LocalSetting 'ModDir' (Join-Path $root 'install\@AIDirector') }
 
 if (-not (Test-Path (Join-Path $ModDir 'ai_director_x64.dll'))) {
     throw "The director mod isn't installed in $ModDir; run tools\install.cmd first."

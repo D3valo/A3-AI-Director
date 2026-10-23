@@ -10,7 +10,8 @@ param([switch]$Release)
 # Native tools write progress to stderr, which 'Stop' would turn into errors in Windows PowerShell;
 # failures are caught through $LASTEXITCODE instead.
 $root = Split-Path $PSScriptRoot -Parent
-$hemtt = 'hemtt'
+. (Join-Path $PSScriptRoot 'LocalSettings.ps1')
+$hemtt = Get-LocalSetting 'Hemtt' 'hemtt'
 
 Push-Location (Join-Path $root 'extension')
 try {

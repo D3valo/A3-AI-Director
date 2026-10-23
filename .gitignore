@@ -8,5 +8,7 @@ extension/target/
 companion/.venv/
 companion/campaigns/
 companion/personalities.toml
+tools/local-settings.psd1
+install/
 __pycache__/
 .env
