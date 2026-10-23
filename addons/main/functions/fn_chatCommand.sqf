@@ -15,6 +15,7 @@
         !director note <fact> | notes | notes clear   standing facts the director keeps in mind this session
         !director give rebels money|recruits <n>      resources at once, no cooldown (negative takes away)
         !director give occupants|invaders attack|defence <n>
+        !director give me|<player name> money <n>     a player's own money
         !director aggression occupants|invaders <points> [minutes]   change an enemy's aggression (default 30 min)
         !approve                    run the proposed decision
         !deny                       drop the proposed decision
@@ -73,12 +74,24 @@ switch (_command) do {
             };
         };
         if ((toLower (_words param [1, ""])) == "give") exitWith {
-            _words params ["", "", ["_who", ""], ["_what", ""], ["_amount", ""]];
-            _who = toLower _who; _what = toLower _what;
-            private _n = parseNumber _amount;
+            // give <who> <what> <n>, where <who> may be a player name with spaces.
+            private _usage = "Usage: !director give rebels money|recruits <n>, give occupants|invaders attack|defence <n>, or give me|<player name> money <n>";
+            if (count _words < 5) exitWith { _usage call _reply };
+            private _who = toLower ((_words select [2, count _words - 4]) joinString " ");
+            private _what = toLower (_words select (count _words - 2));
+            private _n = parseNumber (_words select (count _words - 1));
             if (isNil "A3A_fnc_resourcesFIA") exitWith { "Giving resources needs Antistasi." call _reply };
-            if (_n == 0) exitWith { "Usage: !director give rebels money|recruits <n>, or give occupants|invaders attack|defence <n>" call _reply };
+            if (_n == 0) exitWith { _usage call _reply };
+            // A player's own money (A3U keeps it on their unit), changed where that player is local.
+            private _player = [
+                allPlayers param [allPlayers findIf { toLower name _x == _who }, objNull], _sender
+            ] select (_who == "me");
             switch (true) do {
+                case (!isNull _player && { _what == "money" }): {
+                    [_n] remoteExec ["A3A_fnc_resourcesPlayer", _player];
+                    ["host", format ["The host gave %1 %2 personal money", name _player, _n]] call AID_fnc_event;
+                    format ["%1: %2 money.", name _player, _n] call _reply;
+                };
                 case (_who == "rebels" && { _what in ["money", "recruits"] }): {
                     ([[0, _n], [_n, 0]] select (_what == "recruits")) call A3A_fnc_resourcesFIA;
                     ["host", format ["The host gave the rebels %1 %2", _n, _what]] call AID_fnc_event;
@@ -90,7 +103,10 @@ switch (_command) do {
                     ["host", format ["The host gave the %1 %2 %3 resources", _who, _n, _what]] call AID_fnc_event;
                     format ["%1: %2 %3 resources.", _who, _n, _what] call _reply;
                 };
-                default { "Usage: !director give rebels money|recruits <n>, or give occupants|invaders attack|defence <n>" call _reply };
+                case (_what == "money" && { !(_who in ["rebels", "occupants", "invaders"]) }): {
+                    format ["No player called %1.", _who] call _reply;
+                };
+                default { _usage call _reply };
             };
         };
         if ((toLower (_words param [1, ""])) == "aggression") exitWith {
@@ -149,7 +165,7 @@ switch (_command) do {
         switch (toLower _rest) do {
             case "";
             case "help": {
-                "!director <what you want> | status | on | off | auto | propose | style <name> | hq <off/director/all> | cooldowns <on/off> | arc [idea/status/stop] | note <fact> | notes [clear] | give <side> <what> <n> | aggression <side> <n> [min] | test [full]. !approve / !deny answer a proposal." call _reply;
+                "!director <what you want> | status | on | off | auto | propose | style <name> | hq <off/director/all> | cooldowns <on/off> | arc [idea/status/stop] | note <fact> | notes [clear] | give <side/me/player> <what> <n> | aggression <side> <n> [min] | test [full]. !approve / !deny answer a proposal." call _reply;
             };
             case "status": {
                 format [

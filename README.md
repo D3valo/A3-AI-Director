@@ -200,6 +200,7 @@ and players whose Steam UID is in `AID_chatUIDs` can use them; replies go to the
 | `!director cooldowns off` / `on` | Turn the director's cooldowns off (any action at any time) or back on; `!director cooldowns` shows the setting |
 | `!director give rebels money <n>` / `give rebels recruits <n>` | Give the rebels money or recruits at once, no cooldown (a negative number takes away) |
 | `!director give occupants attack <n>` / `give invaders defence <n>` | Give an enemy side attack or defence resources at once, no cooldown (negative takes away) |
+| `!director give me money <n>` / `give <player name> money <n>` | Give a player personal money (Antistasi's own, as from a donation); negative takes away, never below 0. Handy for testing |
 | `!director aggression occupants <points> [minutes]` | Change an enemy side's aggression, e.g. `!director aggression invaders 30` or `-20` (default 30 minutes) |
 | `!director note <fact>` / `notes` / `notes clear` | Standing facts the director keeps in mind this session, e.g. `!director note we have two AI squads with us` (at most 5) |
 | `!director arc <idea>` / `arc` / `arc status` / `arc stop` | Start a story arc from your idea (or the director's own), show the running one, or stop it ([Story arcs](#story-arcs)) |
